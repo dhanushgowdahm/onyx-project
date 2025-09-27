@@ -1,0 +1,97 @@
+/* Container centers everything */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f9f9f9;
+}
+
+/* Card styling */
+.login-card {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  width: 350px;
+  text-align: center;
+}
+
+/* Title + subtitle */
+.login-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.login-subtitle {
+  color: #6b7280;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Labels + inputs */
+.login-label {
+  display: block;
+  text-align: left;
+  font-weight: 500;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+/* Button */
+.login-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #00001a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.login-button:hover {
+  background-color: #111133;
+}
+
+/* Demo box */
+.demo-box {
+  background-color: #f0f7ff;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.demo-box a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.demo-box a:hover {
+  text-decoration: underline;
+}
+
+.demo-role {
+  color: #000;
+}
+
+/* Responsive for small screens */
+@media (max-width: 400px) {
+  .login-card {
+    width: 90%;
+    padding: 20px;
+  }
+}
