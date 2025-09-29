@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; 
 import "./login.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(""); // State to hold error messages
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,17 +88,37 @@ function LoginPage() {
           onChange={(e) => setUsername(e.target.value)}
           className="login-input"
           required
+          style={{width:330}}
         />
 
         <label className="login-label">Password</label>
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="login-input"
-          required
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            required
+            style={{ paddingRight: "2.5rem",width: 300 }} 
+          />
+          <span
+            onClick={() => setShowPassword((prev) => !prev)}
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              color: "#888"
+            }}
+            tabIndex={0}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            role="button"
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </span>
+        </div>
 
         <button type="submit" className="login-button">
           Sign In
@@ -108,10 +130,10 @@ function LoginPage() {
           </p>
           <p>
             <strong className="demo-role">Receptionist:</strong>{" "}
-            <span>reception_user / password123</span>
+            <span>reception_user / mahadeva2003</span>
           </p>
           <p>
-            <strong className="demo-role">Doctor:</strong> <span>doctor_user / password123</span>
+            <strong className="demo-role">Doctor:</strong> <span>doctor_user / dhanush2003</span>
           </p>
         </div>
       </form>
