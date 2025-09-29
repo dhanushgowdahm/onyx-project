@@ -1,9 +1,11 @@
 // frontend/src/components/login_page/login.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios"; 
 import "./login.css";
 
 function LoginPage() {
+  const navigate = useNavigate();
   // Use 'username' to match the Django backend expectation
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -26,12 +28,34 @@ function LoginPage() {
         }
       );
 
-      // Assuming a successful login, the view will set HttpOnly cookies.
-      // Now we can redirect to the role-based redirector.
+      // Login successful - Django returns JWT tokens only
       console.log("Login successful:", response.data);
 
-      // This will trigger our backend's redirect logic
-      window.location.href = "http://127.0.0.1:8000/api/redirect/";
+      // Store tokens for API authentication
+      if (response.data.access) {
+        localStorage.setItem('access_token', response.data.access);
+        localStorage.setItem('refresh_token', response.data.refresh);
+        
+        // Decode JWT token to extract user role
+        const token = response.data.access;
+        const payload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload
+        const userRole = payload.role;
+        
+        console.log('Decoded user role:', userRole);
+        
+        // Navigate to appropriate React route based on role
+        if (userRole === 'receptionist') {
+          navigate('/receptionist');
+        } else if (userRole === 'doctor') {
+          navigate('/doctor');
+        } else if (userRole === 'admin') {
+          navigate('/admin'); // In case admin exists
+        } else {
+          setError('Unknown user role: ' + userRole);
+        }
+      } else {
+        setError('No access token received');
+      }
 
     } catch (err) {
       // Handle login errors
@@ -84,10 +108,10 @@ function LoginPage() {
           </p>
           <p>
             <strong className="demo-role">Receptionist:</strong>{" "}
-            <span>reception_user</span>
+            <span>reception_user / password123</span>
           </p>
           <p>
-            <strong className="demo-role">Doctor:</strong> <span>doctor_user</span>
+            <strong className="demo-role">Doctor:</strong> <span>doctor_user / password123</span>
           </p>
         </div>
       </form>

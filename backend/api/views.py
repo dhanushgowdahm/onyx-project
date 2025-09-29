@@ -8,14 +8,16 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-# Custom Login View to set token in cookie
+# Custom Login View - Standard JWT approach, only returns tokens
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        # Standard JWT token generation - only returns access and refresh tokens
         response = super().post(request, *args, **kwargs)
+        
         if response.status_code == 200:
-            # Set tokens in HTTPOnly cookies for security
+            # Set tokens in HTTPOnly cookies for security (optional)
             access_token = response.data['access']
             refresh_token = response.data['refresh']
             response.set_cookie(
@@ -30,6 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 httponly=True,
                 samesite='Lax'
             )
+        
         return response
 
 # Login Page View
@@ -45,7 +48,20 @@ def logout_view(request):
     response.delete_cookie('refresh_token')
     return response
 
-# Redirection logic based on role
+# API endpoint to verify user authentication and get user info
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        return Response({
+            'username': user.username,
+            'role': user.role,
+            'user_id': user.id,
+            'is_authenticated': True
+        })
+
+# Redirection logic based on role (kept for backward compatibility)
 class RoleRedirectView(APIView):
     permission_classes = [IsAuthenticated]
 
