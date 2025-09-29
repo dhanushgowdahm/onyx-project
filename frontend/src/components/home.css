@@ -1,0 +1,168 @@
+/* Global */
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background-color: #fff;
+  color: #111;
+}
+
+.dashboard-wrapper {
+  padding: 40px 80px;
+}
+
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 28px;
+}
+
+/* Layout */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+}
+
+.card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  color: #6b6b6b;
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+}
+
+/* Quick Actions */
+.action-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid #e5e5e5;
+  background-color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.action-btn.active {
+  background-color: #111;
+  color: #fff;
+  border: none;
+}
+
+.action-btn:hover {
+  background-color: #f5f5f5;
+}
+
+/* Bed Status */
+.ward {
+  margin-bottom: 20px;
+}
+
+.ward-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bed-grid {
+  display: flex;
+  gap: 10px;
+}
+
+.bed {
+  display: inline-block;
+  width: 48px;
+  height: 38px;
+  border-radius: 8px;
+  text-align: center;
+  line-height: 38px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.available {
+  background-color: #eafbea;
+  color: #0a6e0a;
+  border: 1px solid #c9efc9;
+}
+
+.occupied {
+  background-color: #fdecec;
+  color: #d72626;
+  border: 1px solid #f5b7b7;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.85rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.available-dot {
+  background-color: #16a34a;
+}
+
+.occupied-dot {
+  background-color: #dc2626;
+}
+
+/* Appointments */
+.appointments {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.appt-date {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.appt-item {
+  background-color: #f3f6ff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.appt-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.appt-doctor {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+}
+
+.appt-time {
+  font-weight: 600;
+  color: #0043ce;
+  font-size: 0.9rem;
+}
