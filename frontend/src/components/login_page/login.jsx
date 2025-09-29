@@ -1,13 +1,47 @@
+// frontend/src/components/login_page/login.jsx
 import React, { useState } from "react";
-import "./login.css"; 
+import axios from "axios"; 
+import "./login.css";
 
 function LoginPage() {
-  const [email, setEmail] = useState("");
+  // Use 'username' to match the Django backend expectation
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // State to hold error messages
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Email entered: ${email}`); 
+    setError(""); // Clear previous errors
+
+    try {
+      // The URL to your Django token endpoint
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/api/token/",
+        {
+          username: username,
+          password: password,
+        },
+        {
+          withCredentials: true, // Important to send cookies
+        }
+      );
+
+      // Assuming a successful login, the view will set HttpOnly cookies.
+      // Now we can redirect to the role-based redirector.
+      console.log("Login successful:", response.data);
+
+      // This will trigger our backend's redirect logic
+      window.location.href = "http://127.0.0.1:8000/api/redirect/";
+
+    } catch (err) {
+      // Handle login errors
+      if (err.response && err.response.status === 401) {
+        setError("Invalid username or password. Please try again.");
+      } else {
+        setError("An error occurred during login. Please try again later.");
+        console.error("Login error:", err);
+      }
+    }
   };
 
   return (
@@ -16,12 +50,16 @@ function LoginPage() {
         <h2 className="login-title">Hospital Management System</h2>
         <p className="login-subtitle">Sign in to your account</p>
 
-        <label className="login-label">Email</label>
+        {/* Display error message if it exists */}
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
+        {/* Change label and input to handle 'Username' instead of 'Email' */}
+        <label className="login-label">Username</label>
         <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Enter your username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="login-input"
           required
         />
@@ -46,13 +84,10 @@ function LoginPage() {
           </p>
           <p>
             <strong className="demo-role">Receptionist:</strong>{" "}
-            <a href="mailto:receptionist@hospital.com">
-              receptionist@hospital.com
-            </a>
+            <span>reception_user</span>
           </p>
           <p>
-            <strong className="demo-role">Doctor:</strong>{" "}
-            <a href="mailto:doctor@hospital.com">doctor@hospital.com</a>
+            <strong className="demo-role">Doctor:</strong> <span>doctor_user</span>
           </p>
         </div>
       </form>
