@@ -1,13 +1,17 @@
 // frontend/src/components/login_page/login.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios"; 
 import "./login.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function LoginPage() {
+  const navigate = useNavigate();
   // Use 'username' to match the Django backend expectation
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(""); // State to hold error messages
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,12 +30,34 @@ function LoginPage() {
         }
       );
 
-      // Assuming a successful login, the view will set HttpOnly cookies.
-      // Now we can redirect to the role-based redirector.
+      // Login successful - Django returns JWT tokens only
       console.log("Login successful:", response.data);
 
-      // This will trigger our backend's redirect logic
-      window.location.href = "http://127.0.0.1:8000/api/redirect/";
+      // Store tokens for API authentication
+      if (response.data.access) {
+        localStorage.setItem('access_token', response.data.access);
+        localStorage.setItem('refresh_token', response.data.refresh);
+        
+        // Decode JWT token to extract user role
+        const token = response.data.access;
+        const payload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload
+        const userRole = payload.role;
+        
+        console.log('Decoded user role:', userRole);
+        
+        // Navigate to appropriate React route based on role
+        if (userRole === 'receptionist') {
+          navigate('/receptionist');
+        } else if (userRole === 'doctor') {
+          navigate('/doctor');
+        } else if (userRole === 'admin') {
+          navigate('/admin'); // In case admin exists
+        } else {
+          setError('Unknown user role: ' + userRole);
+        }
+      } else {
+        setError('No access token received');
+      }
 
     } catch (err) {
       // Handle login errors
@@ -62,17 +88,37 @@ function LoginPage() {
           onChange={(e) => setUsername(e.target.value)}
           className="login-input"
           required
+          style={{width:330}}
         />
 
         <label className="login-label">Password</label>
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="login-input"
-          required
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            required
+            style={{ paddingRight: "2.5rem",width: 300 }} 
+          />
+          <span
+            onClick={() => setShowPassword((prev) => !prev)}
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              color: "#888"
+            }}
+            tabIndex={0}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            role="button"
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </span>
+        </div>
 
         <button type="submit" className="login-button">
           Sign In
@@ -84,10 +130,10 @@ function LoginPage() {
           </p>
           <p>
             <strong className="demo-role">Receptionist:</strong>{" "}
-            <span>reception_user</span>
+            <span>reception_user / mahadeva2003</span>
           </p>
           <p>
-            <strong className="demo-role">Doctor:</strong> <span>doctor_user</span>
+            <strong className="demo-role">Doctor:</strong> <span>doctor_user / dhanush2003</span>
           </p>
         </div>
       </form>
