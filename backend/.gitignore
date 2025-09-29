@@ -62,7 +62,6 @@ coverage.xml
 
 # Django specific files
 local_settings.py
-db.sqlite3
 media/
 staticfiles/
 *.log
