@@ -72,72 +72,54 @@ function LoginPage() {
 
   return (
     <div className="login-container">
-      <form className="login-card" onSubmit={handleSubmit}>
-        <h2 className="login-title">Hospital Management System</h2>
-        <p className="login-subtitle">Sign in to your account</p>
+  <form className="login-card" onSubmit={handleSubmit}>
+    <h2 className="login-title">Hospital Management System</h2>
+    <p className="login-subtitle">Sign in to your account</p>
 
-        {/* Display error message if it exists */}
-        {error && <p style={{ color: "red" }}>{error}</p>}
+    {error && <p className="error-message">{error}</p>}
 
-        {/* Change label and input to handle 'Username' instead of 'Email' */}
-        <label className="login-label">Username</label>
-        <input
-          type="text"
-          placeholder="Enter your username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="login-input"
-          required
-          style={{width:330}}
-        />
+    <label className="login-label">Username</label>
+    <input
+      type="text"
+      placeholder="Enter your username"
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      className="login-input"
+      required
+    />
 
-        <label className="login-label">Password</label>
-        <div style={{ position: "relative" }}>
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="login-input"
-            required
-            style={{ paddingRight: "2.5rem",width: 300 }} 
-          />
-          <span
-            onClick={() => setShowPassword((prev) => !prev)}
-            style={{
-              position: "absolute",
-              right: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              color: "#888"
-            }}
-            tabIndex={0}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            role="button"
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </span>
-        </div>
-
-        <button type="submit" className="login-button">
-          Sign In
-        </button>
-
-        <div className="demo-box">
-          <p>
-            <strong>Demo Credentials:</strong>
-          </p>
-          <p>
-            <strong className="demo-role">Receptionist:</strong>{" "}
-            <span>reception_user / mahadeva2003</span>
-          </p>
-          <p>
-            <strong className="demo-role">Doctor:</strong> <span>doctor_user / dhanush2003</span>
-          </p>
-        </div>
-      </form>
+    <label className="login-label">Password</label>
+    <div className="password-wrapper">
+      <input
+        type={showPassword ? "text" : "password"}
+        placeholder="Enter your password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="login-input"
+        required
+      />
+      <span
+        onClick={() => setShowPassword((prev) => !prev)}
+        className="toggle-password"
+        tabIndex={0}
+        aria-label={showPassword ? "Hide password" : "Show password"}
+        role="button"
+      >
+        {showPassword ? <FaEyeSlash /> : <FaEye />}
+      </span>
     </div>
+
+    <button type="submit" className="login-button">
+      🔐 Sign In
+    </button>
+
+    <div className="demo-box">
+      <p><strong>Demo Credentials:</strong></p>
+      <p><strong className="demo-role">Receptionist:</strong> reception_user / mahadeva2003</p>
+      <p><strong className="demo-role">Doctor:</strong> doctor_user / dhanush2003</p>
+    </div>
+  </form>
+</div>
   );
 }
 
