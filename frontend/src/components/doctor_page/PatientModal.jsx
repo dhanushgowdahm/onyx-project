@@ -2,10 +2,13 @@
 import React from "react";
 
 export default function PatientModal({ patient, onClose, onAddMedication, onAddDiagnosis }) {
+  if (!patient) return null;
+
   const handleMedication = () => {
     if (onAddMedication) onAddMedication(patient.id);
     else console.log("Add medication:", patient.id);
   };
+  
   const handleDiagnosis = () => {
     if (onAddDiagnosis) onAddDiagnosis(patient.id);
     else console.log("Add diagnosis:", patient.id);

@@ -1,8 +1,8 @@
 // src/components/doctor_page/doctor.jsx
 import React, { useEffect, useState } from "react";
-import PatientModal from "../PatientModal";
-import StatsCard from "../StatsCard";
-import "../dashboard.css";
+import PatientModal from "./PatientModal";
+import StatsCard from "./StatsCard";
+import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
 
 /*
@@ -21,28 +21,24 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const base = apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
   const navigate = useNavigate();
 
-  // sample fallback data (used if fetch fails)
+  // sample fallback data
   const samplePatients = [
-    { id: "P001", name: "John Smith", bed: "A-101", condition: "Stable", contact: "+1234567890", emergency: "+1234567891", age: 45, gender: "Male", address: "123 Main St" },
-    { id: "P002", name: "Michael Brown", bed: "Not assigned", condition: "Routine Checkup", contact: "+9876543210", emergency: "+9876543211", age: 50, gender: "Male", address: "45 Elm Ave" }
+    { id: "P001", name: "John Smith", bed: "A-101", condition: "Hypertension" },
+    { id: "P002", name: "Michael Brown", bed: "Not assigned", condition: "Routine Checkup" }
   ];
   const sampleAppointments = [
     { id: "A001", patientId: "P001", patient: "John Smith", time: "10:00", status: "scheduled" }
   ];
 
   const handleLogout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        navigate('/login');
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    navigate("/login");
   };
 
   useEffect(() => {
-    // if user supplied both props, skip fetching
-    if (patientsProp && appointmentsProp) {
-      return;
-    }
+    if (patientsProp && appointmentsProp) return;
 
-    // otherwise fetch from API (if base provided), else use sample data
     if (!base) {
       setPatients(samplePatients);
       setAppointments(sampleAppointments);
@@ -81,40 +77,29 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
 
   return (
     <div className="hd-dashboard">
-      <div
-        className="hd-header"
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
-        <div>
-          <h1 className="hd-title">Doctor Dashboard</h1>
-          <div className="hd-subtitle">Welcome, Dr. Emily Wilson</div>
+      {/* Header */}
+      <div className="hd-topbar">
+        <h2 className="hd-app-title">Hospital Management</h2>
+        <div className="hd-user-info">
+          Welcome, Dr. Emily Wilson
+          <button className="hd-logout-btn" onClick={handleLogout}>Logout</button>
         </div>
-
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: "10px 20px",
-            background: "#d00a1aff",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
       </div>
+
+      {/* Page Title */}
+      <h1 className="hd-title">Doctor Dashboard</h1>
+      <p className="hd-subtitle">Welcome, Dr. Emily Wilson</p>
 
       {loading && <div className="hd-info">Loading...</div>}
       {error && <div className="hd-error">{error}</div>}
 
       <div className="hd-grid">
+        {/* Patients */}
         <div className="hd-card hd-card-large">
           <div className="hd-card-header">
-            <strong>My Patients</strong>
+            👥 <strong> My Patients</strong>
             <span className="hd-badge">{patients.length}</span>
           </div>
-
           <table className="hd-table">
             <thead>
               <tr>
@@ -131,7 +116,12 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
                   <td>{p.bed}</td>
                   <td>{p.condition}</td>
                   <td>
-                    <button className="hd-btn" onClick={() => setSelectedPatient(p)}>View</button>
+                    <button className="hd-btn-icon" onClick={() => setSelectedPatient(p)}>
+                      👁️
+                    </button>
+                    <button className="hd-btn-icon">
+                      🔗
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -142,9 +132,10 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
           </table>
         </div>
 
+        {/* Appointments */}
         <div className="hd-card hd-card-large">
           <div className="hd-card-header">
-            <strong>Today's Appointments</strong>
+            📅 <strong> Today's Appointments</strong>
             <span className="hd-badge">{appointments.length}</span>
           </div>
           <div className="hd-appointments">
@@ -152,10 +143,10 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
               <div key={a.id} className="hd-appointment">
                 <div>
                   <div className="hd-apt-name">{a.patient}</div>
-                  <div className="hd-apt-id">Patient ID: {a.patientId || a.patientId}</div>
+                  <div className="hd-apt-id">Patient ID: {a.patientId}</div>
                 </div>
                 <div className="hd-apt-meta">
-                  <div className="hd-time">{a.time}</div>
+                  <div className="hd-time">🕐 {a.time}</div>
                   <div className="hd-status">{a.status}</div>
                 </div>
               </div>
@@ -165,11 +156,12 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
         </div>
       </div>
 
+      {/* Stats */}
       <div className="hd-stats-row">
-        <StatsCard title="Total Patients" value={patients.length} />
-        <StatsCard title="Today's Appointments" value={appointments.length} />
-        <StatsCard title="Specialization" value="Cardiology" />
-        <StatsCard title="Available Days" value="3" />
+        <StatsCard title="Total Patients" value={patients.length} icon="👥" />
+        <StatsCard title="Today's Appointments" value={appointments.length} icon="📅" />
+        <StatsCard title="Specialization" value="Cardiology" icon="💊" />
+        <StatsCard title="Available Days" value="3" icon="🕐" />
       </div>
 
       {selectedPatient && (
