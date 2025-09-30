@@ -7,6 +7,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import viewsets, permissions
+from .models import Doctor, Patient, Bed, Appointment
+from .serializers import DoctorSerializer, PatientSerializer, BedSerializer, AppointmentSerializer
 
 # Custom Login View - Standard JWT approach, only returns tokens
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -34,6 +37,30 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
         
         return response
+
+class IsAdminOrReceptionist(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role in ['admin', 'receptionist']
+
+class DoctorViewSet(viewsets.ModelViewSet):
+    queryset = Doctor.objects.all()
+    serializer_class = DoctorSerializer
+    permission_classes = [IsAdminOrReceptionist]
+
+class PatientViewSet(viewsets.ModelViewSet):
+    queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
+    permission_classes = [IsAdminOrReceptionist]
+
+class BedViewSet(viewsets.ModelViewSet):
+    queryset = Bed.objects.all()
+    serializer_class = BedSerializer
+    permission_classes = [IsAdminOrReceptionist]
+
+class AppointmentViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+    permission_classes = [IsAdminOrReceptionist]
 
 # Login Page View
 def login_view(request):
