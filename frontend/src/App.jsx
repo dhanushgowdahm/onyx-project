@@ -7,6 +7,10 @@ import Doctors from "./components/Doctors";
 import Beds from "./components/Beds";
 import Appointments from "./components/Appointments";
 import "./App.css";
+import LoginPage from "./components/login_page/login";
+import Receptionist from "./components/receptionist";
+import Doctor from "./components/doctor_page/doctor";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
