@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./components/login_page/login";
 import Receptionist from "./components/receptionist";
-import Doctor from "./components/doctor";
+import Doctor from "./components/doctor_page/doctor";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
