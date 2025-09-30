@@ -1,9 +1,9 @@
 // src/components/doctor_page/doctor.jsx
 import React, { useEffect, useState } from "react";
-import PatientModal from "../PatientModal";
-import StatsCard from "../StatsCard";
-import "../dashboard.css";
-
+import PatientModal from "./PatientModal";
+import StatsCard from "./StatsCard";
+import "./dashboard.css";
+import { useNavigate } from "react-router-dom";
 /*
 Props:
   - patients (optional array) 
@@ -16,7 +16,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [loading, setLoading] = useState(!patientsProp || !appointmentsProp);
   const [error, setError] = useState(null);
-
+    const navigate = useNavigate();
   const base = apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
 
   // sample fallback data (used if fetch fails)
@@ -27,6 +27,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const sampleAppointments = [
     { id: "A001", patientId: "P001", patient: "John Smith", time: "10:00", status: "scheduled" }
   ];
+  
 
   useEffect(() => {
     // if user supplied both props, skip fetching
@@ -77,7 +78,9 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
         <div>
           <h1 className="hd-title">Doctor Dashboard</h1>
           <div className="hd-subtitle">Welcome, Dr. Emily Wilson</div>
+          
         </div>
+                        
       </div>
 
       {loading && <div className="hd-info">Loading...</div>}

@@ -1,0 +1,212 @@
+.hd-dashboard {
+  padding: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #222;
+}
+/* src/components/dashboard.css */
+.hd-dashboard {
+  padding: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #222;
+}
+
+/* header */
+.hd-header {
+  display: flex;
+  justify-content: space-between; /* title left, logout right */
+  align-items: center;
+  margin-bottom: 12px;
+}
+.hd-title { margin: 0; font-size: 24px; }
+.hd-subtitle { color: #666; margin-top: 6px; }
+
+/* logout button */
+.hd-logout {
+  padding: 10px 20px;
+  background: #ff0a1e;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.hd-logout:hover {
+  background: #d40c19;
+}
+
+.hd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.hd-card {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.hd-card-large { min-height: 140px; }
+
+.hd-card-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.hd-badge {
+  background:#f2f2f2;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  color:#333;
+}
+
+.hd-table {
+  width:100%;
+  border-collapse: collapse;
+  background: white;
+}
+.hd-table th, .hd-table td {
+  padding: 8px;
+  border-top: 1px solid #eee;
+  text-align:left;
+}
+.hd-table th {
+  color:#666;
+  font-weight:600;
+  font-size:13px;
+  border-bottom: 1px solid #eee;
+}
+
+.hd-btn {
+  padding: 6px 10px;
+  border: none;
+  background: #1976d2;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 6px;
+}
+.hd-btn:hover { opacity: 0.95; }
+.hd-btn-ghost {
+  background: #f6f6f6;
+  color: #333;
+  border: 1px solid #e0e0e0;
+}
+
+.hd-appointments {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* small appointment item */
+.hd-appointment {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px;
+  border-radius:6px;
+  border:1px solid #f0f0f0;
+  background:#fff;
+}
+
+.hd-apt-name { font-weight:600; }
+.hd-apt-id { font-size:12px; color:#666; }
+.hd-time { color:#1a73e8; font-weight:600; }
+.hd-status {
+  font-size:12px;
+  background:#f4f4f4;
+  padding:4px 8px;
+  border-radius:6px;
+  color:#333;
+}
+
+/* stats row */
+.hd-stats-row {
+  display:flex;
+  gap:12px;
+  margin-top:16px;
+}
+.hd-stats-card {
+  flex:1;
+  padding:10px;
+  border:1px solid #eee;
+  background:#fff;
+  border-radius:8px;
+  text-align:left;
+}
+.hd-stats-title { color:#777; font-size:13px; }
+.hd-stats-value { font-size:20px; font-weight:700; margin-top:6px; }
+
+/* modal */
+.hd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index: 9999;
+}
+.hd-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 720px;
+  max-width: 95%;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+.hd-modal-close {
+  position:absolute;
+  right:12px;
+  top:8px;
+  border:none;
+  background:transparent;
+  font-size:22px;
+  cursor:pointer;
+}
+.hd-modal-title { margin:0 0 12px 0; }
+.hd-modal-grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  margin-bottom: 12px;
+}
+.hd-meta-label { color:#777; font-size:13px; }
+.hd-meta-value { font-weight:700; margin-top:4px; }
+.hd-condition {
+  padding:10px;
+  border-radius:8px;
+  background:#fafafa;
+  border:1px solid #f0f0f0;
+  margin-top:6px;
+}
+
+.hd-modal-actions {
+  display:flex;
+  gap:8px;
+  margin-top:16px;
+  align-items:center;
+}
+.hd-btn-icon {
+  padding:8px 12px;
+  background:#fff;
+  border:1px solid #e6e6e6;
+  color:#333;
+}
+.hd-btn-secondary { background:#eee; color:#111; border:none; }
+.hd-info { color:#555; margin-bottom:8px; }
+.hd-error { color: #b00020; margin-bottom:8px; }
+/* src/components/dashboard.css */
+.hd-dashboard {
+  padding: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #222;
+}
+/* ... rest of your CSS ... */
+.hd-error { color: #b00020; margin-bottom:8px; }
