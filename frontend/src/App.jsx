@@ -4,6 +4,7 @@ import NavigationBar from "./components/NavigationBar";
 import "./App.css";
 import LoginPage from "./components/login_page/login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Patient from "./components/patient_page/Patient";
 
 // Import existing components
 import ReceptionistDashboard from "./components/reception_page/ReceptionistDashboard";
@@ -40,7 +41,7 @@ function App() {
           <ProtectedRoute requiredRole="receptionist">
             <NavigationBar />
             <div className="main-content">
-              <ReceptionistDashboard />
+              <Patient />
             </div>
           </ProtectedRoute>
         } />
@@ -72,6 +73,16 @@ function App() {
           </ProtectedRoute>
         } />
         
+        <Route path="/patients" element={
+          <ProtectedRoute requiredRole="receptionist">
+            <NavigationBar />
+            <div className="main-content">
+              <Patient />
+            </div>
+          </ProtectedRoute>
+        } />
+
+
         {/* Protected route for doctor */}
         <Route path="/doctor" element={
           <ProtectedRoute requiredRole="doctor">

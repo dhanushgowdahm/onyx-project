@@ -1,8 +1,19 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import "./NavigationBar.css";
 
 function NavigationBar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear authentication tokens
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    
+    // Redirect to login page
+    navigate('/login');
+  };
+
   return (
     <header className="navbar">
       <h2 className="logo">Hospital Management</h2>
@@ -25,7 +36,7 @@ function NavigationBar() {
       </nav>
       <div className="user-info">
         <span>Welcome, Alice Johnson</span>
-        <button className="logout-btn">Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>Logout</button>
       </div>
     </header>
   );
