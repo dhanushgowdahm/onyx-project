@@ -6,6 +6,7 @@ import "./login.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function LoginPage() {
+  console.log("LoginPage component is rendering");
   const navigate = useNavigate();
   // Use 'username' to match the Django backend expectation
   const [username, setUsername] = useState("");
@@ -47,7 +48,7 @@ function LoginPage() {
         
         // Navigate to appropriate React route based on role
         if (userRole === 'receptionist') {
-          navigate('/receptionist');
+          navigate('/home');
         } else if (userRole === 'doctor') {
           navigate('/doctor');
         } else if (userRole === 'admin') {

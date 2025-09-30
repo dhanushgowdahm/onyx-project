@@ -1,5 +1,12 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import NavigationBar from "./components/NavigationBar";
+import ReceptionistDashboard from "./components/ReceptionistDashboard";
+import Patients from "./components/Patients";
+import Doctors from "./components/Doctors";
+import Beds from "./components/Beds";
+import Appointments from "./components/Appointments";
+import "./App.css";
 import LoginPage from "./components/login_page/login";
 import Receptionist from "./components/receptionist";
 import Doctor from "./components/doctor_page/doctor";
@@ -8,24 +15,16 @@ import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* Protected routes - require authentication and specific roles */}
-        <Route path="/receptionist" element={
-          <ProtectedRoute requiredRole="receptionist">
-            <Receptionist />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/doctor" element={
-          <ProtectedRoute requiredRole="doctor">
-            <Doctor />
-          </ProtectedRoute>
-        } />
-      </Routes>
+      <NavigationBar />
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<ReceptionistDashboard />} />
+          <Route path="/patients" element={<Patients />} />
+          <Route path="/doctors" element={<Doctors />} />
+          <Route path="/beds" element={<Beds />} />
+          <Route path="/appointments" element={<Appointments />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
