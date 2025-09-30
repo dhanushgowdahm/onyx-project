@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import PatientModal from "../PatientModal";
 import StatsCard from "../StatsCard";
 import "../dashboard.css";
+import { useNavigate } from "react-router-dom";
 
 /*
 Props:
@@ -18,6 +19,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const [error, setError] = useState(null);
 
   const base = apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
+  const navigate = useNavigate();
 
   // sample fallback data (used if fetch fails)
   const samplePatients = [
@@ -27,6 +29,12 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const sampleAppointments = [
     { id: "A001", patientId: "P001", patient: "John Smith", time: "10:00", status: "scheduled" }
   ];
+
+  const handleLogout = () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        navigate('/login');
+  };
 
   useEffect(() => {
     // if user supplied both props, skip fetching
@@ -73,11 +81,28 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
 
   return (
     <div className="hd-dashboard">
-      <div className="hd-header">
+      <div
+        className="hd-header"
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+      >
         <div>
           <h1 className="hd-title">Doctor Dashboard</h1>
           <div className="hd-subtitle">Welcome, Dr. Emily Wilson</div>
         </div>
+
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: "10px 20px",
+            background: "#d00a1aff",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       {loading && <div className="hd-info">Loading...</div>}
