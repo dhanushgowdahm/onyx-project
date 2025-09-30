@@ -44,6 +44,17 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
     alert(`Medication prescribed successfully for ${prescribePatient.name}`);
   };
 
+  const handleAddMedication = (patientId) => {
+    // Find the patient by ID
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Close the patient details modal
+      setSelectedPatient(null);
+      // Open the medication modal
+      setPrescribePatient(patient);
+    }
+  };
+
   useEffect(() => {
     if (patientsProp && appointmentsProp) return;
 
@@ -176,7 +187,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
         <PatientModal
           patient={selectedPatient}
           onClose={() => setSelectedPatient(null)}
-          onAddMedication={(id) => { console.log("Add medication for", id); }}
+          onAddMedication={handleAddMedication}
           onAddDiagnosis={(id) => { console.log("Add diagnosis for", id); }}
         />
       )}
