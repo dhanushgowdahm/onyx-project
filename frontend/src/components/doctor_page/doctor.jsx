@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import PatientModal from "./PatientModal";
 import StatsCard from "./StatsCard";
 import MedicationModal from "./MedicationModal";
+import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +18,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const [appointments, setAppointments] = useState(appointmentsProp || []);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescribePatient, setPrescribePatient] = useState(null);
+  const [diagnosisPatient, setDiagnosisPatient] = useState(null);
   const [loading, setLoading] = useState(!patientsProp || !appointmentsProp);
   const [error, setError] = useState(null);
 
@@ -42,6 +44,34 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
     console.log(`Prescribed for patient ${patientId}:`, medicationDetails);
     // Here you can add API call to save the prescription
     alert(`Medication prescribed successfully for ${prescribePatient.name}`);
+  };
+
+  const handleSaveDiagnosis = (patientId, diagnosisData) => {
+    console.log(`Diagnosis saved for patient ${patientId}:`, diagnosisData);
+    // Here you can add API call to save the diagnosis
+    alert(`Diagnosis saved successfully for ${diagnosisPatient.name}`);
+  };
+
+  const handleAddMedication = (patientId) => {
+    // Find the patient by ID
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Close the patient details modal
+      setSelectedPatient(null);
+      // Open the medication modal
+      setPrescribePatient(patient);
+    }
+  };
+
+  const handleAddDiagnosis = (patientId) => {
+    // Find the patient by ID
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Close the patient details modal
+      setSelectedPatient(null);
+      // Open the diagnosis modal
+      setDiagnosisPatient(patient);
+    }
   };
 
   useEffect(() => {
@@ -176,8 +206,8 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
         <PatientModal
           patient={selectedPatient}
           onClose={() => setSelectedPatient(null)}
-          onAddMedication={(id) => { console.log("Add medication for", id); }}
-          onAddDiagnosis={(id) => { console.log("Add diagnosis for", id); }}
+          onAddMedication={handleAddMedication}
+          onAddDiagnosis={handleAddDiagnosis}
         />
       )}
 
@@ -186,6 +216,14 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
           patient={prescribePatient}
           onClose={() => setPrescribePatient(null)}
           onPrescribe={handlePrescribe}
+        />
+      )}
+
+      {diagnosisPatient && (
+        <DiagnosisModal
+          patient={diagnosisPatient}
+          onClose={() => setDiagnosisPatient(null)}
+          onSaveDiagnosis={handleSaveDiagnosis}
         />
       )}
     </div>
