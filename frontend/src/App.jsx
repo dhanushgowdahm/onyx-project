@@ -5,6 +5,8 @@ import "./App.css";
 import LoginPage from "./components/login_page/login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Patient from "./components/patient_page/Patient";
+import Doctors from "./components/docters_in_receptionist_page/Doctors";
+import Appointment from "./components/appointments_page/Appointment";
 
 // Import existing components
 import ReceptionistDashboard from "./components/reception_page/ReceptionistDashboard";
@@ -50,7 +52,7 @@ function App() {
           <ProtectedRoute requiredRole="receptionist">
             <NavigationBar />
             <div className="main-content">
-              <ReceptionistDashboard />
+              <Doctors />
             </div>
           </ProtectedRoute>
         } />
@@ -68,7 +70,7 @@ function App() {
           <ProtectedRoute requiredRole="receptionist">
             <NavigationBar />
             <div className="main-content">
-              <ReceptionistDashboard />
+              <Appointment />
             </div>
           </ProtectedRoute>
         } />
