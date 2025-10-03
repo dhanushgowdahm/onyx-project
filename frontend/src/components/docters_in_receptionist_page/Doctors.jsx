@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./Doctors.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { doctorsAPI } from "../../services/api";
@@ -9,8 +9,10 @@ const Doctors = () => {
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
+  const [searchError, setSearchError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState("");
   const [currentDoctor, setCurrentDoctor] = useState({
     id: "",
     name: "",
@@ -132,13 +134,70 @@ const Doctors = () => {
     }
   };
 
-  const filteredDoctors = search
-  ? doctors.filter(
-      (doc) => doc.name.toLowerCase().includes(search.toLowerCase().trim()) ||
-               doc.id.toLowerCase().includes(search.toLowerCase().trim()) ||
-               doc.specialization.toLowerCase().includes(search.toLowerCase().trim())
-    )
-  : doctors;
+  // Enhanced search with comprehensive error handling
+  const filteredDoctors = useMemo(() => {
+    try {
+      console.log('🔍 Doctor Search Debug:', {
+        searchTerm: search,
+        doctorsCount: doctors?.length || 0,
+        doctorsArray: doctors
+      });
+      
+      setSearchError(""); // Clear any previous search errors
+      
+      // Validate doctors array
+      if (!Array.isArray(doctors)) {
+        console.warn('⚠️ Doctors is not an array:', doctors);
+        setDebugInfo(`Invalid doctors data type: ${typeof doctors}`);
+        return [];
+      }
+      
+      // If no search term, return all doctors
+      if (!search || search.trim() === '') {
+        setDebugInfo(`Showing all ${doctors.length} doctors`);
+        return doctors;
+      }
+      
+      const searchTerm = search.toLowerCase().trim();
+      
+      const filtered = doctors.filter((doc) => {
+        try {
+          // Defensive null checks for all searchable fields
+          const name = (doc?.name || '').toString().toLowerCase();
+          const id = (doc?.id || '').toString().toLowerCase();
+          const specialization = (doc?.specialization || '').toString().toLowerCase();
+          
+          return name.includes(searchTerm) || 
+                 id.includes(searchTerm) || 
+                 specialization.includes(searchTerm);
+        } catch (fieldError) {
+          console.warn('⚠️ Error processing doctor for search:', doc, fieldError);
+          return false; // Skip this doctor if there's an error
+        }
+      });
+      
+      setDebugInfo(`Found ${filtered.length} doctors matching "${search}"`);
+      return filtered;
+      
+    } catch (error) {
+      console.error('❌ Search Error:', error);
+      setSearchError(`Search error: ${error.message}`);
+      setDebugInfo(`Search failed: ${error.message}`);
+      return doctors || []; // Return original doctors array on error
+    }
+  }, [search, doctors]);
+  
+  // Safe search input handler with error boundary
+  const handleSearchChange = useCallback((e) => {
+    try {
+      const value = e?.target?.value || '';
+      console.log('🔄 Search input changed:', value);
+      setSearch(value);
+    } catch (error) {
+      console.error('❌ Search input error:', error);
+      setSearchError(`Input error: ${error.message}`);
+    }
+  }, []);
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -151,12 +210,42 @@ const Doctors = () => {
             type="text"
             placeholder="Search by name, ID, or specialization..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
           <button className="add-doctor-btn" onClick={() => handleOpenModal()}>
             + Add Doctor
           </button>
         </div>
+        
+        {/* Debug Information */}
+        {debugInfo && (
+          <div style={{ 
+            padding: '8px', 
+            background: '#f0f8ff', 
+            border: '1px solid #ddd', 
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: '#666',
+            margin: '10px 0'
+          }}>
+            Debug: {debugInfo}
+          </div>
+        )}
+        
+        {/* Search Error Display */}
+        {searchError && (
+          <div style={{ 
+            padding: '8px', 
+            background: '#ffe6e6', 
+            border: '1px solid #ff9999', 
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: '#cc0000',
+            margin: '10px 0'
+          }}>
+            ⚠️ {searchError}
+          </div>
+        )}
 
         {loading && !showModal ? (
           <div className="loading-message">
@@ -180,52 +269,86 @@ const Doctors = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredDoctors.length > 0 ? (
-                filteredDoctors.map((doctor) => {
-                  // Handle availability display - convert string to array if needed
-                  const availability = typeof doctor.availability === 'string' 
-                    ? doctor.availability.split(',').filter(day => day.trim() !== '')
-                    : doctor.availability || [];
+              {(() => {
+                try {
+                  if (!Array.isArray(filteredDoctors) || filteredDoctors.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>
+                          {searchError ? 'Search error occurred' : 
+                           search ? `No doctors found matching "${search}"` : 
+                           'No doctors found'}
+                        </td>
+                      </tr>
+                    );
+                  }
                   
+                  return filteredDoctors.map((doctor) => {
+                    try {
+                      // Safe availability handling with extensive null checks
+                      let availability = [];
+                      if (doctor?.availability) {
+                        if (typeof doctor.availability === 'string') {
+                          availability = doctor.availability.split(',').filter(day => day && day.trim() !== '');
+                        } else if (Array.isArray(doctor.availability)) {
+                          availability = doctor.availability.filter(day => day && day.trim() !== '');
+                        }
+                      }
+                      
+                      return (
+                        <tr key={doctor?.id || Math.random()}>
+                          <td>{doctor?.id || 'N/A'}</td>
+                          <td>{doctor?.name || 'N/A'}</td>
+                          <td>{doctor?.specialization || 'N/A'}</td>
+                          <td>{doctor?.contact || 'N/A'}</td>
+                          <td>
+                            {availability.map((day, index) => (
+                              <span className="day-chip" key={`${day}-${index}`}>
+                                {day.trim()}
+                              </span>
+                            ))}
+                            {availability.length === 0 && <span style={{color: '#999'}}>Not specified</span>}
+                          </td>
+                          <td>
+                            <button
+                              className="icon-btn"
+                              onClick={() => handleOpenModal(doctor)}
+                              disabled={loading}
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              className="icon-btn"
+                              onClick={() => handleDelete(doctor?.id)}
+                              disabled={loading}
+                            >
+                              <FaTrash />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    } catch (rowError) {
+                      console.error('❌ Error rendering doctor row:', doctor, rowError);
+                      return (
+                        <tr key={Math.random()}>
+                          <td colSpan="6" style={{textAlign: 'center', color: '#ff6b6b', padding: '10px'}}>
+                            Error displaying doctor data
+                          </td>
+                        </tr>
+                      );
+                    }
+                  });
+                } catch (renderError) {
+                  console.error('❌ Critical render error:', renderError);
                   return (
-                    <tr key={doctor.id}>
-                      <td>{doctor.id}</td>
-                      <td>{doctor.name}</td>
-                      <td>{doctor.specialization}</td>
-                      <td>{doctor.contact}</td>
-                      <td>
-                        {availability.map((day) => (
-                          <span className="day-chip" key={day}>
-                            {day.trim()}
-                          </span>
-                        ))}
-                      </td>
-                      <td>
-                        <button
-                          className="icon-btn"
-                          onClick={() => handleOpenModal(doctor)}
-                          disabled={loading}
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          className="icon-btn"
-                          onClick={() => handleDelete(doctor.id)}
-                          disabled={loading}
-                        >
-                          <FaTrash />
-                        </button>
+                    <tr>
+                      <td colSpan="6" style={{textAlign: 'center', color: '#ff6b6b', padding: '20px'}}>
+                        Unable to display doctors. Please refresh the page.
                       </td>
                     </tr>
                   );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>
-                    No doctors found
-                  </td>
-                </tr>
-              )}
+                }
+              })()}
             </tbody>
           </table>
         )}
