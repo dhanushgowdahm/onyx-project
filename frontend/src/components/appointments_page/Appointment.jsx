@@ -2,38 +2,7 @@ import React, { useState } from "react";
 import "./Appointment.css";
 
 const Appointment = () => {
-  const [appointments, setAppointments] = useState([
-    {
-      id: "A001",
-      patient: "John Smith",
-      patientId: "P001",
-      doctor: "Dr. Emily Wilson",
-      specialty: "Cardiology",
-      date: "Dec 15, 2024",
-      time: "10:00",
-      status: "completed",
-    },
-    {
-      id: "A002",
-      patient: "Sarah Johnson",
-      patientId: "P002",
-      doctor: "Dr. Robert Davis",
-      specialty: "Endocrinology",
-      date: "Dec 15, 2024",
-      time: "14:30",
-      status: "scheduled",
-    },
-    {
-      id: "A003",
-      patient: "Michael Brown",
-      patientId: "P003",
-      doctor: "Dr. Emily Wilson",
-      specialty: "Cardiology",
-      date: "Dec 16, 2024",
-      time: "09:00",
-      status: "scheduled",
-    },
-  ]);
+  const [appointments, setAppointments] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
@@ -46,16 +15,9 @@ const Appointment = () => {
     status: "scheduled",
   });
 
-  const patients = [
-    { id: "P001", name: "John Smith" },
-    { id: "P002", name: "Sarah Johnson" },
-    { id: "P003", name: "Michael Brown" },
-  ];
+  const patients = [];
 
-  const doctors = [
-    { name: "Dr. Emily Wilson", specialty: "Cardiology" },
-    { name: "Dr. Robert Davis", specialty: "Endocrinology" },
-  ];
+  const doctors = [];
 
   const handleStatusChange = (id, newStatus) => {
     setAppointments((prev) =>

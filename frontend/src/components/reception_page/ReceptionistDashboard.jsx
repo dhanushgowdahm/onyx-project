@@ -88,30 +88,14 @@ function ReceptionistDashboard() {
           <p>Today's and tomorrow's scheduled appointments</p>
 
           <div className="appointment-section">
-            <h4>Today (Dec 15)</h4>
-            <div className="appointment">
-              <div>
-                <strong>John Smith</strong>
-                <p>Dr. Emily Wilson</p>
-              </div>
-              <span className="time">10:00</span>
+            <h4>Today ({new Date().toLocaleDateString()})</h4>
+            <div className="no-appointments">
+              <p>No appointments scheduled for today</p>
             </div>
 
-            <div className="appointment">
-              <div>
-                <strong>Sarah Johnson</strong>
-                <p>Dr. Robert Davis</p>
-              </div>
-              <span className="time">14:30</span>
-            </div>
-
-            <h4>Tomorrow (Dec 16)</h4>
-            <div className="appointment">
-              <div>
-                <strong>Michael Brown</strong>
-                <p>Dr. Emily Wilson</p>
-              </div>
-              <span className="time">09:00</span>
+            <h4>Tomorrow ({new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString()})</h4>
+            <div className="no-appointments">
+              <p>No appointments scheduled for tomorrow</p>
             </div>
           </div>
         </div>

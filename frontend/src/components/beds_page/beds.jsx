@@ -44,18 +44,11 @@ function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
     setLoading(true);
     try {
       // In a real app, you'd fetch patient details based on bed assignment
-      // For now, we'll use sample data that matches the image
-      const samplePatient = {
-        name: "John Smith",
-        id: "P001",
-        age: 45,
-        gender: "Male",
-        contact: "+1234567890",
-        condition: "Hypertension"
-      };
-      setPatientDetails(samplePatient);
+      // TODO: Implement API call to fetch patient details
+      setPatientDetails(null);
     } catch (error) {
       console.error("Error fetching patient details:", error);
+      setPatientDetails(null);
     }
     setLoading(false);
   };
@@ -158,21 +151,11 @@ function AllocateBedModal({ selectedBed, wardName, onClose, onAllocate }) {
         setPatients(availablePatients);
       } else {
         console.error("Failed to fetch patients");
-        // Fallback sample data
-        setPatients([
-          { id: "P002", name: "Sarah Johnson", assigned_bed: "Not assigned" },
-          { id: "P003", name: "Michael Brown", assigned_bed: "Not assigned" },
-          { id: "P004", name: "Emily Davis", assigned_bed: "Not assigned" }
-        ]);
+        setPatients([]);
       }
     } catch (error) {
       console.error("Error fetching patients:", error);
-      // Fallback sample data
-      setPatients([
-        { id: "P002", name: "Sarah Johnson", assigned_bed: "Not assigned" },
-        { id: "P003", name: "Michael Brown", assigned_bed: "Not assigned" },
-        { id: "P004", name: "Emily Davis", assigned_bed: "Not assigned" }
-      ]);
+      setPatients([]);
     }
     setLoading(false);
   };

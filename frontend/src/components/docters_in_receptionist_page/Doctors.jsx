@@ -3,29 +3,7 @@ import "./Doctors.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
 const Doctors = () => {
-  const [doctors, setDoctors] = useState([
-    {
-      id: "D001",
-      name: "Dr. Emily Wilson",
-      specialization: "Cardiology",
-      contact: "+1234567896",
-      availability: ["Mon", "Wed", "Fri"],
-    },
-    {
-      id: "D002",
-      name: "Dr. Robert Davis",
-      specialization: "Endocrinology",
-      contact: "+1234567897",
-      availability: ["Tue", "Thu", "Sat"],
-    },
-    {
-      id: "D003",
-      name: "Dr. Lisa Garcia",
-      specialization: "General Medicine",
-      contact: "+1234567898",
-      availability: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    },
-  ]);
+  const [doctors, setDoctors] = useState([]);
 
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);

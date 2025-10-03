@@ -53,7 +53,7 @@ function NavigationBar({ role = "receptionist" }) {
 
   const getUserInfo = () => {
     if (role === "doctor") {
-      return "Welcome, Dr. Emily Wilson";
+      return "Welcome, Doctor";
     }
     return "Welcome, Alice Johnson";
   };
