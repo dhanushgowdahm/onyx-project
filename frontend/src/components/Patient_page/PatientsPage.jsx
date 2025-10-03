@@ -40,12 +40,71 @@ function PatientsPage() {
     fetchPatients();
   }, []);
 
-  const filteredPatients = patients.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.id.toLowerCase().includes(search.toLowerCase()) ||
-      p.assigned_bed.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPatients = React.useMemo(() => {
+    try {
+      console.log('Filtering patients. Search term:', search, 'Patients count:', patients?.length);
+      if (!patients || patients.length === 0) {
+        console.log('No patients available');
+        return [];
+      }
+      if (!search.trim()) {
+        console.log('No search term, returning all patients');
+        return patients;
+      }
+      
+      const searchLower = search.toLowerCase();
+      
+      // Helper function to safely check string values
+      const safeIncludes = (value) => {
+        try {
+          if (!value) return false;
+          return value.toString().toLowerCase().includes(searchLower);
+        } catch (error) {
+          console.warn('Error in safeIncludes:', error, 'value:', value);
+          return false;
+        }
+      };
+      
+      // Helper function to safely get doctor name
+      const safeDoctorName = (doctorId) => {
+        try {
+          if (!doctorId) return 'Not assigned';
+          const doctor = doctors.find(d => d && d.id && d.id.toString() === doctorId.toString());
+          return doctor ? `Dr. ${doctor.name}` : 'Unknown Doctor';
+        } catch (error) {
+          console.warn('Error in safeDoctorName:', error, 'doctorId:', doctorId);
+          return 'Not assigned';
+        }
+      };
+      
+      const filtered = patients.filter((p) => {
+        try {
+          if (!p) return false;
+          
+          const matches = (
+            safeIncludes(p.name) ||
+            safeIncludes(p.id) ||
+            safeIncludes(p.assigned_bed) ||
+            safeIncludes(p.contact) ||
+            safeIncludes(p.gender) ||
+            safeIncludes(p.age) ||
+            safeDoctorName(p.assigned_doctor).toLowerCase().includes(searchLower)
+          );
+          
+          return matches;
+        } catch (error) {
+          console.warn('Error filtering patient:', error, 'patient:', p);
+          return false;
+        }
+      });
+      
+      console.log('Filtered patients count:', filtered.length);
+      return filtered;
+    } catch (error) {
+      console.error('Error in filteredPatients:', error);
+      return patients || [];
+    }
+  }, [patients, doctors, search]);
 
   const indexOfLast = currentPage * patientsPerPage;
   const indexOfFirst = indexOfLast - patientsPerPage;
@@ -58,11 +117,16 @@ function PatientsPage() {
   };
 
   // Helper function to get doctor name by ID
-  const getDoctorName = (doctorId) => {
-    if (!doctorId) return 'Not assigned';
-    const doctor = doctors.find(d => d.id.toString() === doctorId.toString());
-    return doctor ? `Dr. ${doctor.name}` : 'Unknown Doctor';
-  };
+  const getDoctorName = React.useCallback((doctorId) => {
+    try {
+      if (!doctorId || !doctors || doctors.length === 0) return 'Not assigned';
+      const doctor = doctors.find(d => d && d.id && d.id.toString() === doctorId.toString());
+      return doctor && doctor.name ? `Dr. ${doctor.name}` : 'Unknown Doctor';
+    } catch (error) {
+      console.warn('Error in getDoctorName:', error);
+      return 'Not assigned';
+    }
+  }, [doctors]);
 
   const handleAddPatient = async (newPatient) => {
     try {
@@ -124,6 +188,33 @@ function PatientsPage() {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="main-bg">
+        <div className="container">
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <p>Loading patients...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="main-bg">
+        <div className="container">
+          <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
+            <p>Error: {error}</p>
+            <button onClick={fetchPatients}>Retry</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="main-bg">
       <div className="container">
@@ -137,14 +228,25 @@ function PatientsPage() {
           <span className="search-icon">🔍</span>
           <input
             className="search-input"
-            placeholder="Search by name, ID, or bed number..."
+            placeholder="Search by name, ID, bed, contact, gender, or doctor..."
             value={search}
             onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
+              try {
+                console.log('Search input changed:', e.target.value);
+                setSearch(e.target.value);
+                setCurrentPage(1);
+                console.log('Search state updated successfully');
+              } catch (error) {
+                console.error('Error in search onChange:', error);
+              }
             }}
           />
         </div>
+        {/* Debug info */}
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
+          Total patients: {patients.length} | Filtered: {filteredPatients.length} | Search: "{search}"
+        </div>
+        
         <table>
           <thead>
             <tr>
@@ -159,35 +261,49 @@ function PatientsPage() {
             </tr>
           </thead>
           <tbody>
-            {currentPatients.map((p) => (
-              <tr key={p.id}>
-                <td className="bold-cell">{p.id}</td>
-                <td>{p.name}</td>
-                <td>{p.age}</td>
-                <td>{p.gender}</td>
-                <td>{p.contact}</td>
-                <td>{p.assigned_bed || 'Not assigned'}</td>
-                <td>{getDoctorName(p.assigned_doctor)}</td>
-                <td>
-                  <div className="action-btns">
-                    <button className="action-btn" title="Edit" onClick={() => handleEditClick(p)}>
-                      ✏️
-                    </button>
-                    <button
-                      className="action-btn"
-                      title="Delete"
-                      onClick={() => handleDeletePatient(p.id)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {currentPatients && currentPatients.length > 0 ? (
+              currentPatients.map((p) => {
+                if (!p) return null;
+                return (
+                  <tr key={p.id || `patient-${Math.random()}`}>
+                    <td className="bold-cell">{p.id || 'N/A'}</td>
+                    <td>{p.name || 'N/A'}</td>
+                    <td>{p.age || 'N/A'}</td>
+                    <td>{p.gender || 'N/A'}</td>
+                    <td>{p.contact || 'N/A'}</td>
+                    <td>{p.assigned_bed || 'Not assigned'}</td>
+                    <td>{getDoctorName(p.assigned_doctor)}</td>
+                    <td>
+                      <div className="action-btns">
+                        <button className="action-btn" title="Edit" onClick={() => handleEditClick(p)}>
+                          ✏️
+                        </button>
+                        <button
+                          className="action-btn"
+                          title="Delete"
+                          onClick={() => handleDeletePatient(p.id)}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }).filter(Boolean)
+            ) : null}
             {currentPatients.length === 0 && (
               <tr>
-                <td colSpan="8" style={{ textAlign: "center" }}>
-                  No patients found.
+                <td colSpan="8" style={{ textAlign: "center", padding: "20px" }}>
+                  {search.trim() ? (
+                    <div>
+                      <div>No patients found matching "{search}"</div>
+                      <small style={{ color: "#666", marginTop: "5px", display: "block" }}>
+                        Try searching by name, ID, bed number, contact, gender, or doctor name
+                      </small>
+                    </div>
+                  ) : (
+                    "No patients found."
+                  )}
                 </td>
               </tr>
             )}
