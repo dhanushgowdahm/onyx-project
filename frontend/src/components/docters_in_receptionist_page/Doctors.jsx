@@ -10,6 +10,7 @@ const Doctors = () => {
 
   const [search, setSearch] = useState("");
   const [searchError, setSearchError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentDoctor, setCurrentDoctor] = useState({
@@ -19,6 +20,8 @@ const Doctors = () => {
     contact: "",
     availability: [],
   });
+
+  const doctorsPerPage = 5;
 
   // Fetch doctors from database on component mount
   useEffect(() => {
@@ -181,6 +184,17 @@ const Doctors = () => {
       return doctors || []; // Return original doctors array on error
     }
   }, [search, doctors]);
+
+  // Pagination logic
+  const indexOfLast = currentPage * doctorsPerPage;
+  const indexOfFirst = indexOfLast - doctorsPerPage;
+  const currentDoctors = filteredDoctors.slice(indexOfFirst, indexOfLast);
+
+  const totalPages = Math.ceil(filteredDoctors.length / doctorsPerPage);
+
+  const goToPage = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) setCurrentPage(pageNumber);
+  };
   
   // Safe search input handler with error boundary
   const handleSearchChange = useCallback((e) => {
@@ -188,6 +202,7 @@ const Doctors = () => {
       const value = e?.target?.value || '';
       console.log('🔄 Search input changed:', value);
       setSearch(value);
+      setCurrentPage(1); // Reset to first page when searching
     } catch (error) {
       console.error('❌ Search input error:', error);
       setSearchError(`Input error: ${error.message}`);
@@ -251,26 +266,28 @@ const Doctors = () => {
             <tbody>
               {(() => {
                 try {
-                  if (!Array.isArray(filteredDoctors) || filteredDoctors.length === 0) {
+                  if (!Array.isArray(currentDoctors) || currentDoctors.length === 0) {
                     return (
                       <tr>
                         <td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>
-                          {search.trim() ? (
+                          {search.trim() && filteredDoctors.length === 0 ? (
                             <div>
                               <div>No doctors found matching "{search}"</div>
                               <small style={{ color: "#666", marginTop: "5px", display: "block" }}>
-                                Try searching by name,  or specialization
+                                Try searching by name, ID, or specialization
                               </small>
                             </div>
-                          ) : (
+                          ) : filteredDoctors.length === 0 ? (
                             "No doctors found."
+                          ) : (
+                            "No doctors on this page."
                           )}
                         </td>
                       </tr>
                     );
                   }
                   
-                  return filteredDoctors.map((doctor) => {
+                  return currentDoctors.map((doctor) => {
                     try {
                       // Safe availability handling with extensive null checks
                       let availability = [];
@@ -338,6 +355,20 @@ const Doctors = () => {
               })()}
             </tbody>
           </table>
+        )}
+        
+        {filteredDoctors.length > 0 && (
+          <div style={{ marginTop: "15px", textAlign: "center" }}>
+            <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
+              Prev
+            </button>
+            <span style={{ margin: "0 10px" }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
+              Next
+            </button>
+          </div>
         )}
       </div>
 
