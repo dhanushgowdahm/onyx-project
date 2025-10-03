@@ -12,7 +12,6 @@ const Doctors = () => {
   const [searchError, setSearchError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [debugInfo, setDebugInfo] = useState("");
   const [currentDoctor, setCurrentDoctor] = useState({
     id: "",
     name: "",
@@ -148,13 +147,11 @@ const Doctors = () => {
       // Validate doctors array
       if (!Array.isArray(doctors)) {
         console.warn('⚠️ Doctors is not an array:', doctors);
-        setDebugInfo(`Invalid doctors data type: ${typeof doctors}`);
         return [];
       }
       
       // If no search term, return all doctors
       if (!search || search.trim() === '') {
-        setDebugInfo(`Showing all ${doctors.length} doctors`);
         return doctors;
       }
       
@@ -176,13 +173,11 @@ const Doctors = () => {
         }
       });
       
-      setDebugInfo(`Found ${filtered.length} doctors matching "${search}"`);
       return filtered;
       
     } catch (error) {
       console.error('❌ Search Error:', error);
       setSearchError(`Search error: ${error.message}`);
-      setDebugInfo(`Search failed: ${error.message}`);
       return doctors || []; // Return original doctors array on error
     }
   }, [search, doctors]);
@@ -208,7 +203,7 @@ const Doctors = () => {
         <div className="top-bar">
           <input
             type="text"
-            placeholder="Search by name, ID, or specialization..."
+            placeholder="Search by name,  or specialization..."
             value={search}
             onChange={handleSearchChange}
           />
@@ -216,21 +211,6 @@ const Doctors = () => {
             + Add Doctor
           </button>
         </div>
-        
-        {/* Debug Information */}
-        {debugInfo && (
-          <div style={{ 
-            padding: '8px', 
-            background: '#f0f8ff', 
-            border: '1px solid #ddd', 
-            borderRadius: '4px',
-            fontSize: '12px',
-            color: '#666',
-            margin: '10px 0'
-          }}>
-            Debug: {debugInfo}
-          </div>
-        )}
         
         {/* Search Error Display */}
         {searchError && (
@@ -275,9 +255,16 @@ const Doctors = () => {
                     return (
                       <tr>
                         <td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>
-                          {searchError ? 'Search error occurred' : 
-                           search ? `No doctors found matching "${search}"` : 
-                           'No doctors found'}
+                          {search.trim() ? (
+                            <div>
+                              <div>No doctors found matching "{search}"</div>
+                              <small style={{ color: "#666", marginTop: "5px", display: "block" }}>
+                                Try searching by name,  or specialization
+                              </small>
+                            </div>
+                          ) : (
+                            "No doctors found."
+                          )}
                         </td>
                       </tr>
                     );

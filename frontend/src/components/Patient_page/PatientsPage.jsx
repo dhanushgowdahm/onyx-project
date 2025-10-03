@@ -2,14 +2,17 @@ import React, { useState, useEffect } from "react";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal"; 
 import "./PatientsPage.css";
-import { patientsAPI, doctorsAPI } from "../../services/api";
+import { patientsAPI, doctorsAPI, bedsAPI } from "../../services/api";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ErrorMessage from "../common/ErrorMessage";
 
 function PatientsPage() {
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [beds, setBeds] = useState([]);
   const [search, setSearch] = useState("");
+  const [searchError, setSearchError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
@@ -22,12 +25,14 @@ function PatientsPage() {
     try {
       setLoading(true);
       setError(null);
-      const [patientsData, doctorsData] = await Promise.all([
+      const [patientsData, doctorsData, bedsData] = await Promise.all([
         patientsAPI.getAll(),
-        doctorsAPI.getAll()
+        doctorsAPI.getAll(),
+        bedsAPI.getAll()
       ]);
       setPatients(patientsData);
       setDoctors(doctorsData);
+      setBeds(bedsData);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Failed to load data. Please try again.");
@@ -42,13 +47,20 @@ function PatientsPage() {
 
   const filteredPatients = React.useMemo(() => {
     try {
-      console.log('Filtering patients. Search term:', search, 'Patients count:', patients?.length);
-      if (!patients || patients.length === 0) {
-        console.log('No patients available');
+      console.log('🔍 Patient Search Debug:', {
+        searchTerm: search,
+        patientsCount: patients?.length || 0,
+        patientsArray: patients
+      });
+      
+      setSearchError(""); // Clear any previous search errors
+      
+      if (!Array.isArray(patients)) {
+        console.warn('⚠️ Patients is not an array:', patients);
         return [];
       }
-      if (!search.trim()) {
-        console.log('No search term, returning all patients');
+      
+      if (!search || search.trim() === '') {
         return patients;
       }
       
@@ -81,10 +93,29 @@ function PatientsPage() {
         try {
           if (!p) return false;
           
+          // Helper function to get full bed display for search
+          const getBedDisplayForSearch = (assignedBedId) => {
+            try {
+              if (!assignedBedId) return '';
+              
+              // If already in "Ward X - BedNumber" format (legacy), return as is
+              if (assignedBedId.toString().includes(' - ')) {
+                return assignedBedId.toString();
+              }
+              
+              // Look up bed by ID (since API returns bed ID)
+              const bed = beds.find(b => b && b.id && b.id.toString() === assignedBedId.toString());
+              return bed ? `${bed.ward} ${bed.bed_number}` : assignedBedId.toString();
+            } catch (error) {
+              return assignedBedId ? assignedBedId.toString() : '';
+            }
+          };
+
           const matches = (
             safeIncludes(p.name) ||
             safeIncludes(p.id) ||
             safeIncludes(p.assigned_bed) ||
+            getBedDisplayForSearch(p.assigned_bed).toLowerCase().includes(searchLower) ||
             safeIncludes(p.contact) ||
             safeIncludes(p.gender) ||
             safeIncludes(p.age) ||
@@ -98,13 +129,14 @@ function PatientsPage() {
         }
       });
       
-      console.log('Filtered patients count:', filtered.length);
       return filtered;
+      
     } catch (error) {
-      console.error('Error in filteredPatients:', error);
-      return patients || [];
+      console.error('❌ Search Error:', error);
+      setSearchError(`Search error: ${error.message}`);
+      return patients || []; // Return original patients array on error
     }
-  }, [patients, doctors, search]);
+  }, [patients, doctors, beds, search]);
 
   const indexOfLast = currentPage * patientsPerPage;
   const indexOfFirst = indexOfLast - patientsPerPage;
@@ -127,6 +159,25 @@ function PatientsPage() {
       return 'Not assigned';
     }
   }, [doctors]);
+
+  // Helper function to get bed display with ward info
+  const getBedDisplay = React.useCallback((assignedBedId) => {
+    try {
+      if (!assignedBedId || !beds || beds.length === 0) return 'Not assigned';
+      
+      // Handle case where bed is already in "Ward X - BedNumber" format (legacy data)
+      if (assignedBedId.toString().includes(' - ')) {
+        return assignedBedId.toString(); // Already in correct format
+      }
+      
+      // Look up the bed by ID (since API returns bed ID)
+      const bed = beds.find(b => b && b.id && b.id.toString() === assignedBedId.toString());
+      return bed ? `${bed.ward} ${bed.bed_number}` : `Bed ID: ${assignedBedId}`; // Show bed number with ward
+    } catch (error) {
+      console.warn('Error in getBedDisplay:', error, 'assignedBedId:', assignedBedId);
+      return assignedBedId ? `Bed ID: ${assignedBedId}` : 'Not assigned';
+    }
+  }, [beds]);
 
   const handleAddPatient = async (newPatient) => {
     try {
@@ -191,9 +242,10 @@ function PatientsPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="main-bg">
-        <div className="container">
-          <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div className="patients-page">
+        <h2 className="title">Manage Patients</h2>
+        <div className="patients-box">
+          <div className="loading-message">
             <p>Loading patients...</p>
           </div>
         </div>
@@ -204,9 +256,10 @@ function PatientsPage() {
   // Show error state
   if (error) {
     return (
-      <div className="main-bg">
-        <div className="container">
-          <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
+      <div className="patients-page">
+        <h2 className="title">Manage Patients</h2>
+        <div className="patients-box">
+          <div className="error-message">
             <p>Error: {error}</p>
             <button onClick={fetchPatients}>Retry</button>
           </div>
@@ -216,36 +269,47 @@ function PatientsPage() {
   }
 
   return (
-    <div className="main-bg">
-      <div className="container">
-        <div className="header-bar">
-          <span className="title">Manage Patients</span>
-          <button className="add-btn" onClick={() => setIsAddModalOpen(true)}>
-            <span className="add-icon">+</span> Add Patient
-          </button>
-        </div>
-        <div className="search-wrap">
-          <span className="search-icon">🔍</span>
+    <div className="patients-page">
+      <h2 className="title">Manage Patients</h2>
+      <div className="patients-box">
+        <div className="top-bar">
           <input
-            className="search-input"
-            placeholder="Search by name, ID, bed, contact, gender, or doctor..."
+            type="text"
+            placeholder="Search by name, bed, or doctor..."
             value={search}
             onChange={(e) => {
               try {
-                console.log('Search input changed:', e.target.value);
-                setSearch(e.target.value);
+                const value = e?.target?.value || '';
+                console.log('🔄 Search input changed:', value);
+                setSearch(value);
                 setCurrentPage(1);
+                setSearchError(''); // Clear search error on input
                 console.log('Search state updated successfully');
               } catch (error) {
-                console.error('Error in search onChange:', error);
+                console.error('❌ Search input error:', error);
+                setSearchError(`Input error: ${error.message}`);
               }
             }}
           />
+          <button className="add-patient-btn" onClick={() => setIsAddModalOpen(true)}>
+            + Add Patient
+          </button>
         </div>
-        {/* Debug info */}
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
-          Total patients: {patients.length} | Filtered: {filteredPatients.length} | Search: "{search}"
-        </div>
+        
+        {/* Search Error Display */}
+        {searchError && (
+          <div style={{ 
+            padding: '8px', 
+            background: '#ffe6e6', 
+            border: '1px solid #ff9999', 
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: '#cc0000',
+            margin: '10px 0'
+          }}>
+            ⚠️ {searchError}
+          </div>
+        )}
         
         <table>
           <thead>
@@ -271,21 +335,23 @@ function PatientsPage() {
                     <td>{p.age || 'N/A'}</td>
                     <td>{p.gender || 'N/A'}</td>
                     <td>{p.contact || 'N/A'}</td>
-                    <td>{p.assigned_bed || 'Not assigned'}</td>
+                    <td>{getBedDisplay(p.assigned_bed)}</td>
                     <td>{getDoctorName(p.assigned_doctor)}</td>
                     <td>
-                      <div className="action-btns">
-                        <button className="action-btn" title="Edit" onClick={() => handleEditClick(p)}>
-                          ✏️
-                        </button>
-                        <button
-                          className="action-btn"
-                          title="Delete"
-                          onClick={() => handleDeletePatient(p.id)}
-                        >
-                          🗑️
-                        </button>
-                      </div>
+                      <button
+                        className="icon-btn"
+                        onClick={() => handleEditClick(p)}
+                        disabled={loading}
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="icon-btn"
+                        onClick={() => handleDeletePatient(p.id)}
+                        disabled={loading}
+                      >
+                        <FaTrash />
+                      </button>
                     </td>
                   </tr>
                 );
@@ -298,7 +364,7 @@ function PatientsPage() {
                     <div>
                       <div>No patients found matching "{search}"</div>
                       <small style={{ color: "#666", marginTop: "5px", display: "block" }}>
-                        Try searching by name, ID, bed number, contact, gender, or doctor name
+                        Try searching by name, bed number, or doctor name
                       </small>
                     </div>
                   ) : (
@@ -309,6 +375,7 @@ function PatientsPage() {
             )}
           </tbody>
         </table>
+        
         <div style={{ marginTop: "15px", textAlign: "center" }}>
           <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
             Prev
