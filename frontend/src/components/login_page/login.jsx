@@ -20,7 +20,7 @@ function LoginPage() {
     try {
       // The URL to your Django token endpoint
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/api/token/",
+        "http://127.0.0.1:8000/api/token/",
         {
           username: username,
           password: password,
