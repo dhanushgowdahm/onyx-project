@@ -89,7 +89,6 @@ function App() {
         {/* Protected route for doctor */}
         <Route path="/doctor" element={
           <ProtectedRoute requiredRole="doctor">
-            {/* <NavigationBar /> */}
             <div className="main-content">
               <DoctorDashboard />
             </div>
