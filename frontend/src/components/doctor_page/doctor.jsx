@@ -10,81 +10,14 @@ import { patientsAPI, appointmentsAPI, doctorsAPI } from "../../services/api";
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
+
   const [appointments, setAppointments] = useState([]);
+
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescribePatient, setPrescribePatient] = useState(null);
   const [diagnosisPatient, setDiagnosisPatient] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [doctorInfo, setDoctorInfo] = useState({
-    specialization: "General Medicine",
-    availableDays: 0
-  });
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      console.log('Fetching dashboard data...');
-      
-      const [patientsData, appointmentsData, doctorsData] = await Promise.all([
-        patientsAPI.getAll(),
-        appointmentsAPI.getAll(),
-        doctorsAPI.getAll()
-      ]);
-
-      console.log('Fetched data:', {
-        patients: patientsData?.length || 0,
-        appointments: appointmentsData?.length || 0, 
-        doctors: doctorsData?.length || 0
-      });
-
-      // Filter today's appointments
-      const today = new Date().toISOString().split('T')[0];
-      const todayAppointments = appointmentsData.filter(app => 
-        app.appointment_date === today && app.status !== 'cancelled'
-      );
-
-      // Get current doctor info (you might want to get this from auth context)
-      // For now, we'll use the first doctor or default values
-      console.log('Available doctors:', doctorsData);
-      const currentDoctor = doctorsData && doctorsData.length > 0 ? doctorsData[0] : null;
-      
-      if (currentDoctor) {
-        console.log('Using doctor:', currentDoctor);
-        const availabilityArray = currentDoctor.availability ? currentDoctor.availability.split(',') : [];
-        setDoctorInfo({
-          specialization: currentDoctor.specialization || "General Medicine",
-          availableDays: availabilityArray.length
-        });
-      } else {
-        console.log('No doctors found, using defaults');
-        setDoctorInfo({
-          specialization: "General Medicine",
-          availableDays: 0
-        });
-      }
-
-      setPatients(patientsData || []);
-      setAppointments(todayAppointments || []);
-      
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      // Set empty arrays as fallback
-      setPatients([]);
-      setAppointments([]);
-      setDoctorInfo({
-        specialization: "General Medicine",
-        availableDays: 0
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -210,26 +143,10 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="hd-stats-row">
-        <StatsCard 
-          title="Total Patients" 
-          value={loading ? "..." : patients.length} 
-          icon="👥" 
-        />
-        <StatsCard 
-          title="Today's Appointments" 
-          value={loading ? "..." : appointments.length} 
-          icon="📅" 
-        />
-        <StatsCard 
-          title="Specialization" 
-          value={doctorInfo.specialization} 
-          icon="💊" 
-        />
-        <StatsCard 
-          title="Available Days" 
-          value={loading ? "..." : doctorInfo.availableDays} 
-          icon="🕐" 
-        />
+        <StatsCard title="Total Patients" value={patients.length} icon="👥" />
+        <StatsCard title="Today's Appointments" value={appointments.length} icon="📅" />
+        <StatsCard title="Specialization" value="Cardiology" icon="💊" />
+        <StatsCard title="Available Days" value="3" icon="🕐" />
       </div>
 
       {selectedPatient && (

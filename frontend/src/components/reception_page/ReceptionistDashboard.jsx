@@ -14,6 +14,10 @@ function ReceptionistDashboard() {
     tomorrowAppointments: 0
   });
   const [beds, setBeds] = useState([]);
+  const [appointments, setAppointments] = useState({
+    today: [],
+    tomorrow: []
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,17 +47,23 @@ function ReceptionistDashboard() {
       const totalBeds = bedsData.length;
       const occupiedBeds = bedsData.filter(bed => bed.is_occupied).length;
       
-      // Calculate appointment stats
+      // Calculate appointment stats and separate appointments by date
       const today = new Date().toISOString().split('T')[0];
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
-      const todayAppointments = appointmentsData.filter(app => 
+      const todayAppointmentsList = appointmentsData.filter(app => 
         app.appointment_date === today && app.status !== 'cancelled'
-      ).length;
+      );
       
-      const tomorrowAppointments = appointmentsData.filter(app => 
+      const tomorrowAppointmentsList = appointmentsData.filter(app => 
         app.appointment_date === tomorrow && app.status !== 'cancelled'  
-      ).length;
+      );
+
+      // Set appointments for detailed display
+      setAppointments({
+        today: todayAppointmentsList,
+        tomorrow: tomorrowAppointmentsList
+      });
 
       // Group beds by ward for display
       const wardBeds = bedsData.reduce((acc, bed) => {
@@ -68,8 +78,8 @@ function ReceptionistDashboard() {
         availableDoctors: doctorsData.length,
         occupiedBeds,
         totalBeds,
-        todayAppointments,
-        tomorrowAppointments
+        todayAppointments: todayAppointmentsList.length,
+        tomorrowAppointments: tomorrowAppointmentsList.length
       });
 
       setBeds(wardBeds);
@@ -169,22 +179,52 @@ function ReceptionistDashboard() {
             <h4>Today ({new Date().toLocaleDateString()})</h4>
             {loading ? (
               <p>Loading appointments...</p>
-            ) : stats.todayAppointments > 0 ? (
-              <p>{stats.todayAppointments} appointment(s) scheduled for today</p>
+            ) : appointments.today.length > 0 ? (
+              <div className="appointments-list">
+                {appointments.today.map((appointment, index) => (
+                  <div key={appointment.id || index} className="appointment-item">
+                    <div className="appointment-header">
+                      <span className="appointment-patient">{appointment.patient_name}</span>
+                      <span className="appointment-time">{appointment.appointment_time}</span>
+                    </div>
+                    <div className="appointment-details">
+                      <span className="appointment-doctor">Dr. {appointment.doctor_name}</span>
+                      <span className={`appointment-status status-${appointment.status.toLowerCase()}`}>
+                        {appointment.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="no-appointments">
-                <p>No appointments scheduled for today</p>
+                No appointments scheduled for today
               </div>
             )}
 
             <h4>Tomorrow ({new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString()})</h4>
             {loading ? (
               <p>Loading appointments...</p>
-            ) : stats.tomorrowAppointments > 0 ? (
-              <p>{stats.tomorrowAppointments} appointment(s) scheduled for tomorrow</p>
+            ) : appointments.tomorrow.length > 0 ? (
+              <div className="appointments-list">
+                {appointments.tomorrow.map((appointment, index) => (
+                  <div key={appointment.id || index} className="appointment-item">
+                    <div className="appointment-header">
+                      <span className="appointment-patient">{appointment.patient_name}</span>
+                      <span className="appointment-time">{appointment.appointment_time}</span>
+                    </div>
+                    <div className="appointment-details">
+                      <span className="appointment-doctor">Dr. {appointment.doctor_name}</span>
+                      <span className={`appointment-status status-${appointment.status.toLowerCase()}`}>
+                        {appointment.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="no-appointments">
-                <p>No appointments scheduled for tomorrow</p>
+                No appointments scheduled for tomorrow
               </div>
             )}
           </div>
