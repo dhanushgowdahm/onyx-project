@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal"; 
 import "./PatientsPage.css";
-import { patientsAPI } from "../../services/api";
+import { patientsAPI, doctorsAPI } from "../../services/api";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ErrorMessage from "../common/ErrorMessage";
 
 function PatientsPage() {
   const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -21,11 +22,15 @@ function PatientsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await patientsAPI.getAll();
-      setPatients(data);
+      const [patientsData, doctorsData] = await Promise.all([
+        patientsAPI.getAll(),
+        doctorsAPI.getAll()
+      ]);
+      setPatients(patientsData);
+      setDoctors(doctorsData);
     } catch (error) {
-      console.error("Error fetching patients:", error);
-      setError("Failed to load patients. Please try again.");
+      console.error("Error fetching data:", error);
+      setError("Failed to load data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -52,6 +57,13 @@ function PatientsPage() {
     if (pageNumber >= 1 && pageNumber <= totalPages) setCurrentPage(pageNumber);
   };
 
+  // Helper function to get doctor name by ID
+  const getDoctorName = (doctorId) => {
+    if (!doctorId) return 'Not assigned';
+    const doctor = doctors.find(d => d.id.toString() === doctorId.toString());
+    return doctor ? `Dr. ${doctor.name}` : 'Unknown Doctor';
+  };
+
   const handleAddPatient = async (newPatient) => {
     try {
       // Validate and prepare data before sending
@@ -59,7 +71,7 @@ function PatientsPage() {
         ...newPatient,
         age: parseInt(newPatient.age) || 0, // Ensure age is a number
         assigned_bed: null, // Set to null for now, will be handled separately
-        assigned_doctor: null
+        assigned_doctor: newPatient.assigned_doctor || null
       };
       
       console.log('Sending patient data:', patientData);
@@ -99,7 +111,7 @@ function PatientsPage() {
         ...updatedPatient,
         age: parseInt(updatedPatient.age) || 0,
         assigned_bed: null, // Will be handled separately
-        assigned_doctor: null
+        assigned_doctor: updatedPatient.assigned_doctor || null
       };
       
       await patientsAPI.update(updatedPatient.id, patientData);
@@ -142,6 +154,7 @@ function PatientsPage() {
               <th>Gender</th>
               <th>Contact</th>
               <th>Assigned Bed</th>
+              <th>Assigned Doctor</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -153,7 +166,8 @@ function PatientsPage() {
                 <td>{p.age}</td>
                 <td>{p.gender}</td>
                 <td>{p.contact}</td>
-                <td>{p.assigned_bed}</td>
+                <td>{p.assigned_bed || 'Not assigned'}</td>
+                <td>{getDoctorName(p.assigned_doctor)}</td>
                 <td>
                   <div className="action-btns">
                     <button className="action-btn" title="Edit" onClick={() => handleEditClick(p)}>
@@ -172,7 +186,7 @@ function PatientsPage() {
             ))}
             {currentPatients.length === 0 && (
               <tr>
-                <td colSpan="7" style={{ textAlign: "center" }}>
+                <td colSpan="8" style={{ textAlign: "center" }}>
                   No patients found.
                 </td>
               </tr>

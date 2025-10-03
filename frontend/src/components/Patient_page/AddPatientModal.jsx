@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./AddPatientModal.css";
+import { doctorsAPI } from "../../services/api";
 
 function AddPatientModal({ onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -8,9 +9,30 @@ function AddPatientModal({ onClose, onSave }) {
     gender: "",
     contact: "",
     assigned_bed: "",
+    assigned_doctor: "",
     address: "",
     emergency_contact: "",
   });
+  
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+
+  // Fetch doctors for dropdown
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoadingDoctors(true);
+        const doctorsData = await doctorsAPI.getAll();
+        setDoctors(doctorsData);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    
+    fetchDoctors();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,6 +91,23 @@ function AddPatientModal({ onClose, onSave }) {
           <label>
             Assigned Bed:
             <input name="assigned_bed" value={formData.assigned_bed} onChange={handleChange} />
+          </label>
+          <label>
+            Assign Doctor (Optional):
+            {loadingDoctors ? (
+              <select disabled>
+                <option>Loading doctors...</option>
+              </select>
+            ) : (
+              <select name="assigned_doctor" value={formData.assigned_doctor} onChange={handleChange}>
+                <option value="">No doctor assigned</option>
+                {doctors.map(doctor => (
+                  <option key={doctor.id} value={doctor.id}>
+                    Dr. {doctor.name} - {doctor.specialization}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
           <label>
             Address:

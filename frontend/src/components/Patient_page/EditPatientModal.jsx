@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import "./AddPatientModal.css"; 
+import "./AddPatientModal.css";
+import { doctorsAPI } from "../../services/api";
 
 function EditPatientModal({ patient, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -8,15 +9,39 @@ function EditPatientModal({ patient, onClose, onSave }) {
     gender: "",
     contact: "",
     assigned_bed: "",
+    assigned_doctor: "",
     address: "",
     emergency_contact: "",
   });
+  
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
 
   useEffect(() => {
     if (patient) {
-      setFormData(patient);
+      setFormData({
+        ...patient,
+        assigned_doctor: patient.assigned_doctor || ""
+      });
     }
   }, [patient]);
+  
+  // Fetch doctors for dropdown
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoadingDoctors(true);
+        const doctorsData = await doctorsAPI.getAll();
+        setDoctors(doctorsData);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    
+    fetchDoctors();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,6 +87,43 @@ function EditPatientModal({ patient, onClose, onSave }) {
             Assigned Bed:
             <input name="assigned_bed" value={formData.assigned_bed} onChange={handleChange} />
           </label>
+          {!formData.assigned_doctor && (
+            <label>
+              Assign Doctor:
+              {loadingDoctors ? (
+                <select disabled>
+                  <option>Loading doctors...</option>
+                </select>
+              ) : (
+                <select name="assigned_doctor" value={formData.assigned_doctor} onChange={handleChange}>
+                  <option value="">No doctor assigned</option>
+                  {doctors.map(doctor => (
+                    <option key={doctor.id} value={doctor.id}>
+                      Dr. {doctor.name} - {doctor.specialization}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </label>
+          )}
+          {formData.assigned_doctor && (
+            <div className="assigned-doctor-info">
+              <label>Currently Assigned Doctor:</label>
+              <div className="doctor-display">
+                {(() => {
+                  const doctor = doctors.find(d => d.id.toString() === formData.assigned_doctor.toString());
+                  return doctor ? `Dr. ${doctor.name} - ${doctor.specialization}` : 'Doctor information loading...';
+                })()}
+              </div>
+              <button 
+                type="button" 
+                className="unassign-doctor-btn"
+                onClick={() => setFormData(prev => ({ ...prev, assigned_doctor: "" }))}
+              >
+                Unassign Doctor
+              </button>
+            </div>
+          )}
           <label>
             Address:
             <input name="address" value={formData.address} onChange={handleChange} />
