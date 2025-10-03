@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Appointment.css";
+import { appointmentsAPI, patientsAPI, doctorsAPI } from "../../services/api";
 
 const Appointment = () => {
   const [appointments, setAppointments] = useState([]);
-
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [newAppointment, setNewAppointment] = useState({
@@ -15,9 +19,43 @@ const Appointment = () => {
     status: "scheduled",
   });
 
-  const patients = [];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const doctors = [];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching appointments page data...');
+      
+      const [appointmentsData, patientsData, doctorsData] = await Promise.all([
+        appointmentsAPI.getAll(),
+        patientsAPI.getAll(),
+        doctorsAPI.getAll()
+      ]);
+
+      console.log('Appointments page data:', {
+        appointments: appointmentsData?.length || 0,
+        patients: patientsData?.length || 0,
+        doctors: doctorsData?.length || 0
+      });
+
+      setAppointments(appointmentsData || []);
+      setPatients(patientsData || []);
+      setDoctors(doctorsData || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      console.error("Error details:", err.message);
+      setError(`Failed to load data: ${err.message}`);
+      // Set empty arrays as fallback
+      setAppointments([]);
+      setPatients([]);
+      setDoctors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleStatusChange = (id, newStatus) => {
     setAppointments((prev) =>
@@ -151,11 +189,13 @@ const Appointment = () => {
       </div>
 
       <div className="stats">
-        <div>Today's <br /> {stats.today}</div>
-        <div>Upcoming <br /> {stats.upcoming}</div>
-        <div>Patients <br /> {stats.patients}</div>
-        <div>Doctors <br /> {stats.doctors}</div>
+        <div>Today's <br /> {loading ? "..." : stats.today}</div>
+        <div>Upcoming <br /> {loading ? "..." : stats.upcoming}</div>
+        <div>Patients <br /> {loading ? "..." : stats.patients}</div>
+        <div>Doctors <br /> {loading ? "..." : stats.doctors}</div>
       </div>
+
+      {error && <div className="error-message">{error}</div>}
 
       <div className="appointments">
         <h3>All Appointments</h3>

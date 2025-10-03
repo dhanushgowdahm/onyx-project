@@ -1,29 +1,90 @@
 // src/components/doctor_page/doctor.jsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import PatientModal from "./PatientModal";
 import StatsCard from "./StatsCard";
 import MedicationModal from "./MedicationModal";
 import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
+import { patientsAPI, appointmentsAPI, doctorsAPI } from "../../services/api";
 
-/*
-Props:
-  - patients (optional array) 
-  - appointments (optional array)
-  - apiBaseUrl (optional string) - overrides VITE_API_BASE_URL
-*/
-export default function Dashboard({ patients: patientsProp, appointments: appointmentsProp, apiBaseUrl }) {
-  const [patients, setPatients] = useState(patientsProp || []);
-  const [appointments, setAppointments] = useState(appointmentsProp || []);
+export default function Dashboard() {
+  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescribePatient, setPrescribePatient] = useState(null);
   const [diagnosisPatient, setDiagnosisPatient] = useState(null);
-  const [loading, setLoading] = useState(!patientsProp || !appointmentsProp);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [doctorInfo, setDoctorInfo] = useState({
+    specialization: "General Medicine",
+    availableDays: 0
+  });
 
-  const base = apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching dashboard data...');
+      
+      const [patientsData, appointmentsData, doctorsData] = await Promise.all([
+        patientsAPI.getAll(),
+        appointmentsAPI.getAll(),
+        doctorsAPI.getAll()
+      ]);
+
+      console.log('Fetched data:', {
+        patients: patientsData?.length || 0,
+        appointments: appointmentsData?.length || 0, 
+        doctors: doctorsData?.length || 0
+      });
+
+      // Filter today's appointments
+      const today = new Date().toISOString().split('T')[0];
+      const todayAppointments = appointmentsData.filter(app => 
+        app.appointment_date === today && app.status !== 'cancelled'
+      );
+
+      // Get current doctor info (you might want to get this from auth context)
+      // For now, we'll use the first doctor or default values
+      console.log('Available doctors:', doctorsData);
+      const currentDoctor = doctorsData && doctorsData.length > 0 ? doctorsData[0] : null;
+      
+      if (currentDoctor) {
+        console.log('Using doctor:', currentDoctor);
+        const availabilityArray = currentDoctor.availability ? currentDoctor.availability.split(',') : [];
+        setDoctorInfo({
+          specialization: currentDoctor.specialization || "General Medicine",
+          availableDays: availabilityArray.length
+        });
+      } else {
+        console.log('No doctors found, using defaults');
+        setDoctorInfo({
+          specialization: "General Medicine",
+          availableDays: 0
+        });
+      }
+
+      setPatients(patientsData || []);
+      setAppointments(todayAppointments || []);
+      
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      // Set empty arrays as fallback
+      setPatients([]);
+      setAppointments([]);
+      setDoctorInfo({
+        specialization: "General Medicine",
+        availableDays: 0
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -65,44 +126,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
     }
   };
 
-  useEffect(() => {
-    if (patientsProp && appointmentsProp) return;
 
-    if (!base) {
-      setPatients([]);
-      setAppointments([]);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const [pRes, aRes] = await Promise.all([
-          fetch(`${base.replace(/\/$/, "")}/patients`),
-          fetch(`${base.replace(/\/$/, "")}/appointments`)
-        ]);
-        if (!pRes.ok || !aRes.ok) throw new Error("Network response was not ok");
-        const [pJson, aJson] = await Promise.all([pRes.json(), aRes.json()]);
-        if (cancelled) return;
-        setPatients(Array.isArray(pJson) ? pJson : []);
-        setAppointments(Array.isArray(aJson) ? aJson : []);
-      } catch (err) {
-        console.error("Dashboard load error:", err);
-        if (!cancelled) {
-          setError("Failed to load data from API.");
-          setPatients([]);
-          setAppointments([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [patientsProp, appointmentsProp, base]);
 
   return (
     <div className="hd-dashboard">
@@ -119,8 +143,7 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
       <h1 className="hd-title">Doctor Dashboard</h1>
       <p className="hd-subtitle">Welcome back, Doctor. Here's your daily overview.</p>
 
-      {loading && <div className="hd-info">Loading dashboard data...</div>}
-      {error && <div className="hd-error">{error}</div>}
+
 
       <div className="hd-grid">
         {/* Patients */}
@@ -187,10 +210,26 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
 
       {/* Stats */}
       <div className="hd-stats-row">
-        <StatsCard title="Total Patients" value={patients.length} icon="👥" />
-        <StatsCard title="Today's Appointments" value={appointments.length} icon="📅" />
-        <StatsCard title="Specialization" value="Cardiology" icon="💊" />
-        <StatsCard title="Available Days" value="3" icon="🕐" />
+        <StatsCard 
+          title="Total Patients" 
+          value={loading ? "..." : patients.length} 
+          icon="👥" 
+        />
+        <StatsCard 
+          title="Today's Appointments" 
+          value={loading ? "..." : appointments.length} 
+          icon="📅" 
+        />
+        <StatsCard 
+          title="Specialization" 
+          value={doctorInfo.specialization} 
+          icon="💊" 
+        />
+        <StatsCard 
+          title="Available Days" 
+          value={loading ? "..." : doctorInfo.availableDays} 
+          icon="🕐" 
+        />
       </div>
 
       {selectedPatient && (

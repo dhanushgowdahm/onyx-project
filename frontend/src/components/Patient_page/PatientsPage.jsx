@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal"; 
 import "./PatientsPage.css";
+import { patientsAPI } from "../../services/api";
+import LoadingSpinner from "../common/LoadingSpinner";
+import ErrorMessage from "../common/ErrorMessage";
 
 function PatientsPage() {
   const [patients, setPatients] = useState([]);
@@ -9,20 +12,22 @@ function PatientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const patientsPerPage = 5;
 
 
   const fetchPatients = async () => {
     try {
-      const response = await fetch("/api/patients");
-      if (response.ok) {
-        const data = await response.json();
-        setPatients(data);
-      } else {
-        console.error("Failed to fetch patients");
-      }
+      setLoading(true);
+      setError(null);
+      const data = await patientsAPI.getAll();
+      setPatients(data);
     } catch (error) {
       console.error("Error fetching patients:", error);
+      setError("Failed to load patients. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,20 +54,24 @@ function PatientsPage() {
 
   const handleAddPatient = async (newPatient) => {
     try {
-      const response = await fetch("/api/patients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newPatient),
-      });
-      if (response.ok) {
-        await fetchPatients(); 
-        setIsAddModalOpen(false);
-      } else {
-        alert("Failed to add patient");
-      }
+      // Validate and prepare data before sending
+      const patientData = {
+        ...newPatient,
+        age: parseInt(newPatient.age) || 0, // Ensure age is a number
+        assigned_bed: null, // Set to null for now, will be handled separately
+        assigned_doctor: null
+      };
+      
+      console.log('Sending patient data:', patientData);
+      await patientsAPI.create(patientData);
+      await fetchPatients(); 
+      setIsAddModalOpen(false); // Only close on success
+      alert('Patient added successfully!');
     } catch (error) {
-      alert("Error adding patient");
-      console.error(error);
+      console.error('Full error:', error);
+      const errorMessage = error.message || 'Unknown error occurred';
+      alert(`Error adding patient: ${errorMessage}`);
+      // Don't close modal on error so user can fix the issue
     }
   };
 
@@ -71,15 +80,12 @@ function PatientsPage() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(`/api/patients/${id}`, { method: "DELETE" });
-      if (response.ok) {
-        await fetchPatients(); 
-      } else {
-        alert("Failed to delete patient");
-      }
+      await patientsAPI.delete(id);
+      await fetchPatients(); 
     } catch (error) {
-      alert("Error deleting patient");
-      console.error(error);
+      console.error('Delete error:', error);
+      const errorMessage = error.message || 'Unknown error occurred';
+      alert(`Error deleting patient: ${errorMessage}`);
     }
   };
 
@@ -89,20 +95,20 @@ function PatientsPage() {
 
   const handleUpdatePatient = async (updatedPatient) => {
     try {
-      const response = await fetch(`/api/patients/${updatedPatient.id}`, {
-        method: "PUT", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedPatient),
-      });
-      if (response.ok) {
-        setEditingPatient(null);
-        await fetchPatients(); 
-      } else {
-        alert("Failed to update patient");
-      }
+      const patientData = {
+        ...updatedPatient,
+        age: parseInt(updatedPatient.age) || 0,
+        assigned_bed: null, // Will be handled separately
+        assigned_doctor: null
+      };
+      
+      await patientsAPI.update(updatedPatient.id, patientData);
+      setEditingPatient(null);
+      await fetchPatients();
     } catch (error) {
-      alert("Error updating patient");
-      console.error(error);
+      console.error('Update error:', error);
+      const errorMessage = error.message || 'Unknown error occurred';
+      alert(`Error updating patient: ${errorMessage}`);
     }
   };
 

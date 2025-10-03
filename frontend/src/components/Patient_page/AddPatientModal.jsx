@@ -19,12 +19,25 @@ function AddPatientModal({ onClose, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!formData.name.trim()) {
       alert("Name is required");
       return;
     }
+    
+    if (!formData.age || parseInt(formData.age) <= 0) {
+      alert("Please enter a valid age");
+      return;
+    }
+    
+    if (!formData.gender) {
+      alert("Please select a gender");
+      return;
+    }
+    
+    // Don't close modal here - let the parent handle success/error
     onSave(formData);
-    onClose();
   };
 
   return (
