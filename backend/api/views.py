@@ -136,6 +136,7 @@ class UserInfoView(APIView):
         print(f"UserInfoView - User: {user.username}, First: '{user.first_name}', Last: '{user.last_name}'")  # Debug
         
         response_data = {
+            
             'username': user.username,
             'first_name': user.first_name or '',  # Ensure empty string instead of None
             'last_name': user.last_name or '',    # Ensure empty string instead of None
