@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import NavigationBar from "./components/NavigationBar";
 import "./App.css";
 import LoginPage from "./components/login_page/login";
+import LandingPage from "./components/landing_page/LandingPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Doctors from "./components/docters_in_receptionist_page/Doctors";
 import Appointment from "./components/appointments_page/Appointment";
@@ -17,9 +18,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<LoginPage />} />
+  {/* Public routes */}
+  <Route path="/" element={<LandingPage />} />
+  <Route path="/landing" element={<LandingPage />} />
+  <Route path="/login" element={<LoginPage />} />
         
         {/* Protected routes for receptionist */}
         <Route path="/home" element={
@@ -95,8 +97,8 @@ function App() {
           </ProtectedRoute>
         } />
         
-        {/* Catch-all route - redirect to login */}
-        <Route path="*" element={<LoginPage />} />
+  {/* Catch-all route - show landing page */}
+  <Route path="*" element={<LandingPage />} />
       </Routes>
     </Router>
   );
