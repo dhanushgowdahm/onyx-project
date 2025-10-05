@@ -439,3 +439,383 @@
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* Loading and Error States */
+.loading-section {
+  text-align: center;
+  padding: 30px;
+}
+
+.loading-text {
+  color: #666;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.error-section {
+  text-align: center;
+  padding: 30px;
+}
+
+.error-text {
+  color: #d32f2f;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Conditional Doctor Assignment Styles */
+.doctor-selection {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8f9ff;
+  border: 1px solid #e3f2fd;
+  border-radius: 8px;
+}
+
+.doctor-selection label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.doctor-dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  margin-bottom: 8px;
+}
+
+.doctor-dropdown:focus {
+  outline: none;
+  border-color: #0a0826;
+  box-shadow: 0 0 0 2px rgba(10, 8, 38, 0.1);
+}
+
+.doctor-note {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  margin-top: 5px;
+}
+
+.doctor-info {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f0f8ff;
+  border: 1px solid #cce7ff;
+  border-radius: 8px;
+}
+
+.doctor-info label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.current-doctor {
+  font-size: 14px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Modal Overlay and Base Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Bed Details Modal - Scrollable */
+.bed-details-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh; /* Limit height to 80% of viewport */
+  overflow-y: auto; /* Enable vertical scrolling */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Allocate Bed Modal */
+.allocate-bed-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+/* Modal Animation */
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal Header */
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modal-title {
+  margin: 0;
+  padding: 20px 20px 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Modal Content Sections */
+.bed-info-section {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.bed-info-section h4 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.bed-status-text {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Patient Details Section - Scrollable Content */
+.patient-details-section {
+  padding: 20px;
+  flex: 1; /* Allow section to grow and take available space */
+  overflow-y: auto; /* Enable scrolling within this section if needed */
+}
+
+.section-title {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.patient-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #333;
+  text-align: right;
+  flex: 1;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+/* Modal Actions */
+.modal-actions {
+  padding: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  background: #fafafa;
+  border-radius: 0 0 12px 12px;
+  position: sticky; /* Keep buttons visible when scrolling */
+  bottom: 0;
+  background: white;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.discharge-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.discharge-btn:hover {
+  background: #c82333;
+}
+
+/* Patient Selection */
+.patient-selection {
+  padding: 20px;
+}
+
+.patient-selection label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.patient-dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.patient-dropdown:focus {
+  outline: none;
+  border-color: #0a0826;
+  box-shadow: 0 0 0 2px rgba(10, 8, 38, 0.1);
+}
+
+/* Responsive Design */
+.allocate-btn {
+  background: #0a0826;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.allocate-btn:hover:not(:disabled) {
+  background: #232158;
+}
+
+.allocate-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Scrollbar Styling for Modal */
+.bed-details-modal::-webkit-scrollbar,
+.allocate-bed-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bed-details-modal::-webkit-scrollbar-track,
+.allocate-bed-modal::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.bed-details-modal::-webkit-scrollbar-thumb,
+.allocate-bed-modal::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.bed-details-modal::-webkit-scrollbar-thumb:hover,
+.allocate-bed-modal::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (max-width: 600px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+  
+  .bed-details-modal,
+  .allocate-bed-modal {
+    max-height: 90vh;
+    margin: auto;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .info-label {
+    min-width: auto;
+    font-weight: 600;
+  }
+  
+  .info-value {
+    text-align: left;
+  }
+}
+
+

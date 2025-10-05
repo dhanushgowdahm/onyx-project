@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import viewsets, permissions
+from .models import Doctor, Patient, Bed, Appointment
+from .serializers import DoctorSerializer, PatientSerializer, BedSerializer, AppointmentSerializer
+from .permissions import IsAdminOrReceptionist, IsDoctor # Import new permissions
 
 # Custom Login View - Standard JWT approach, only returns tokens
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -34,6 +38,46 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
         
         return response
+
+class DoctorViewSet(viewsets.ModelViewSet):
+    queryset = Doctor.objects.all()
+    serializer_class = DoctorSerializer
+    # Only receptionists and admins can manage doctors
+    permission_classes = [IsAdminOrReceptionist]
+
+class PatientViewSet(viewsets.ModelViewSet):
+    serializer_class = PatientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'doctor':
+            # Use the direct relationship! This is robust.
+            return Patient.objects.filter(assigned_doctor=user.doctor_profile)
+        elif user.role in ['admin', 'receptionist']:
+            return Patient.objects.all()
+        return Patient.objects.none()
+
+
+class BedViewSet(viewsets.ModelViewSet):
+    queryset = Bed.objects.all()
+    serializer_class = BedSerializer
+    # Only receptionists and admins can manage beds
+    permission_classes = [IsAdminOrReceptionist]
+
+class AppointmentViewSet(viewsets.ModelViewSet):
+    serializer_class = AppointmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'doctor':
+            # Use the direct relationship here as well!
+            return Appointment.objects.filter(doctor=user.doctor_profile)
+        elif user.role in ['admin', 'receptionist']:
+            return Appointment.objects.all()
+        return Appointment.objects.none()
+
 
 # Login Page View
 def login_view(request):

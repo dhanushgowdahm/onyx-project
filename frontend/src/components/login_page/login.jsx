@@ -1,9 +1,9 @@
 // frontend/src/components/login_page/login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; 
 import "./login.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { authAPI } from "../../services/api";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -18,28 +18,18 @@ function LoginPage() {
     setError(""); // Clear previous errors
 
     try {
-      // The URL to your Django token endpoint
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/api/token/",
-        {
-          username: username,
-          password: password,
-        },
-        {
-          withCredentials: true, // Important to send cookies
-        }
-      );
-
+      const response = await authAPI.login(username, password);
+      
       // Login successful - Django returns JWT tokens only
-      console.log("Login successful:", response.data);
+      console.log("Login successful:", response);
 
       // Store tokens for API authentication
-      if (response.data.access) {
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
+      if (response.access) {
+        localStorage.setItem('access_token', response.access);
+        localStorage.setItem('refresh_token', response.refresh);
         
         // Decode JWT token to extract user role
-        const token = response.data.access;
+        const token = response.access;
         const payload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload
         const userRole = payload.role;
         
