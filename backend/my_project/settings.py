@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-rtun%0w+=!&@6y7u9#lr7w=2t(!@9sd2f^mj9u6^5*yhv$wa%u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # bms_project/settings.py
 AUTH_USER_MODEL = 'api.CustomUser'
@@ -162,3 +162,10 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+
+
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
