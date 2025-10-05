@@ -186,8 +186,6 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
         </div>
 
         <div className="hd-modal-actions">
-          <button className="hd-btn hd-btn-primary" onClick={handleMedication}>Add Medication</button>
-          <button className="hd-btn hd-btn-primary" onClick={handleDiagnosis}>Add Diagnosis</button>
           <button 
             className="hd-btn hd-btn-view" 
             onClick={handleViewPDF} 
