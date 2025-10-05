@@ -1,12 +1,13 @@
 // src/components/PatientModal.jsx
 import React, { useState, useEffect } from "react";
-import { medicinesAPI, diagnosesAPI } from "../../services/api";
+import { medicinesAPI, diagnosesAPI, reportsAPI } from "../../services/api";
 
 export default function PatientModal({ patient, onClose, onAddMedication, onAddDiagnosis }) {
   const [medicines, setMedicines] = useState([]);
   const [diagnoses, setDiagnoses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewingPDF, setViewingPDF] = useState(false);
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -51,6 +52,19 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
   const handleDiagnosis = () => {
     if (onAddDiagnosis) onAddDiagnosis(patient.id);
     else console.log("Add diagnosis:", patient.id);
+  };
+
+  const handleViewPDF = async () => {
+    try {
+      setViewingPDF(true);
+      await reportsAPI.viewPatientReport(patient.id, patient.name);
+      console.log("PDF opened successfully for patient:", patient.name);
+    } catch (error) {
+      console.error("Error viewing PDF:", error);
+      alert(`Failed to open PDF report: ${error.message}`);
+    } finally {
+      setViewingPDF(false);
+    }
   };
 
   return (
@@ -172,8 +186,14 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
         </div>
 
         <div className="hd-modal-actions">
-          <button className="hd-btn hd-btn-primary" onClick={handleMedication}>Add Medication</button>
-          <button className="hd-btn hd-btn-primary" onClick={handleDiagnosis}>Add Diagnosis</button>
+          <button 
+            className="hd-btn hd-btn-view" 
+            onClick={handleViewPDF} 
+            disabled={viewingPDF}
+            title="View Patient Report PDF - Opens in new tab with print/download options"
+          >
+            {viewingPDF ? "📄 Opening..." : "📄 View PDF"}
+          </button>
           <div style={{flex:1}} />
           <button className="hd-btn hd-btn-secondary" onClick={onClose}>Close</button>
         </div>

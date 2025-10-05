@@ -59,6 +59,23 @@ td {
   cursor: pointer;
   margin-right: 8px;
   font-size: 16px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.view-patient-btn {
+  color: #000000;
+}
+
+.view-patient-btn:hover {
+  background: #f0f0f0;
+  color: #333333;
 }
 
 .loading-message {

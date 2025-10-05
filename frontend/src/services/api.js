@@ -407,6 +407,82 @@ export const diagnosesAPI = {
   }
 };
 
+// PDF Reports API
+export const reportsAPI = {
+  generatePatientPDF: async (patientId) => {
+    const response = await fetch(`${API_BASE_URL}/patient-report-pdf/${patientId}/`, {
+      headers: getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    // Return the blob for download
+    return response.blob();
+  },
+
+  viewPatientReport: async (patientId, patientName) => {
+    try {
+      // Method 1: Try to get the blob first and create object URL
+      const response = await fetch(`${API_BASE_URL}/patient-report-pdf/${patientId}/`, {
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Get the PDF blob
+      const blob = await response.blob();
+      
+      // Create object URL and open in new tab
+      const url = window.URL.createObjectURL(blob);
+      const newWindow = window.open(url, '_blank');
+      
+      if (!newWindow) {
+        window.URL.revokeObjectURL(url);
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+      
+      // Clean up the object URL after a delay (when user likely finished with it)
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 60000); // Clean up after 1 minute
+      
+      return true;
+    } catch (error) {
+      console.error('Error viewing PDF:', error);
+      throw error;
+    }
+  },
+
+  downloadPatientReport: async (patientId, patientName) => {
+    try {
+      const blob = await reportsAPI.generatePatientPDF(patientId);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `patient_report_${patientName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return true;
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      throw error;
+    }
+  }
+};
+
 export default {
   authAPI,
   patientsAPI,
@@ -414,5 +490,6 @@ export default {
   bedsAPI,
   appointmentsAPI,
   medicinesAPI,
-  diagnosesAPI
+  diagnosesAPI,
+  reportsAPI
 };
