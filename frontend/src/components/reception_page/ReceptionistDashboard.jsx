@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ReceptionistDashboard.css";
 import { patientsAPI, doctorsAPI, bedsAPI, appointmentsAPI } from "../../services/api";
+import { getTodayString } from "../../utils/dateUtils";
 
 function ReceptionistDashboard() {
   const navigate = useNavigate();
@@ -11,12 +12,12 @@ function ReceptionistDashboard() {
     occupiedBeds: 0,
     totalBeds: 0,
     todayAppointments: 0,
-    tomorrowAppointments: 0
+    allAppointments: 0
   });
   const [beds, setBeds] = useState([]);
   const [appointments, setAppointments] = useState({
     today: [],
-    tomorrow: []
+    all: [] // Changed from tomorrow to all
   });
   const [loading, setLoading] = useState(true);
 
@@ -47,22 +48,27 @@ function ReceptionistDashboard() {
       const totalBeds = bedsData.length;
       const occupiedBeds = bedsData.filter(bed => bed.is_occupied).length;
       
-      // Calculate appointment stats and separate appointments by date
-      const today = new Date().toISOString().split('T')[0];
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      // Get all non-cancelled appointments and sort by date
+      // Use consistent date format across all components
+      const todayStr = getTodayString();
+      
+      const allAppointmentsList = appointmentsData
+        .sort((a, b) => {
+          // Sort by date first, then by time
+          if (a.appointment_date === b.appointment_date) {
+            return a.appointment_time.localeCompare(b.appointment_time);
+          }
+          return a.appointment_date.localeCompare(b.appointment_date);
+        });
       
       const todayAppointmentsList = appointmentsData.filter(app => 
-        app.appointment_date === today && app.status !== 'cancelled'
-      );
-      
-      const tomorrowAppointmentsList = appointmentsData.filter(app => 
-        app.appointment_date === tomorrow && app.status !== 'cancelled'  
+        app.appointment_date === todayStr && app.status !== 'cancelled'
       );
 
-      // Set appointments for detailed display
+      // Set all appointments for detailed display
       setAppointments({
         today: todayAppointmentsList,
-        tomorrow: tomorrowAppointmentsList
+        all: allAppointmentsList // Show all appointments instead of just tomorrow
       });
 
       // Group beds by ward for display
@@ -79,7 +85,7 @@ function ReceptionistDashboard() {
         occupiedBeds,
         totalBeds,
         todayAppointments: todayAppointmentsList.length,
-        tomorrowAppointments: tomorrowAppointmentsList.length
+        allAppointments: appointmentsData.length // Show total count including cancelled
       });
 
       setBeds(wardBeds);
@@ -202,12 +208,12 @@ function ReceptionistDashboard() {
               </div>
             )}
 
-            <h4>Tomorrow ({new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString()})</h4>
+            <h4>All Appointments ({appointments.all.length} total)</h4>
             {loading ? (
               <p>Loading appointments...</p>
-            ) : appointments.tomorrow.length > 0 ? (
-              <div className="appointments-list">
-                {appointments.tomorrow.map((appointment, index) => (
+            ) : appointments.all.length > 0 ? (
+              <div className="appointments-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {appointments.all.map((appointment, index) => (
                   <div key={appointment.id || index} className="appointment-item">
                     <div className="appointment-header">
                       <span className="appointment-patient">{appointment.patient_name}</span>
@@ -215,6 +221,7 @@ function ReceptionistDashboard() {
                     </div>
                     <div className="appointment-details">
                       <span className="appointment-doctor">Dr. {appointment.doctor_name}</span>
+                      <span className="appointment-date">{new Date(appointment.appointment_date).toLocaleDateString()}</span>
                       <span className={`appointment-status status-${appointment.status.toLowerCase()}`}>
                         {appointment.status}
                       </span>
@@ -224,7 +231,7 @@ function ReceptionistDashboard() {
               </div>
             ) : (
               <div className="no-appointments">
-                No appointments scheduled for tomorrow
+                No appointments found
               </div>
             )}
           </div>

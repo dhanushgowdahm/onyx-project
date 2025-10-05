@@ -24,7 +24,8 @@ function EditPatientModal({ patient, onClose, onSave }) {
     if (patient) {
       setFormData({
         ...patient,
-        assigned_doctor: patient.assigned_doctor || ""
+        assigned_doctor: patient.assigned_doctor || "",
+        assigned_bed: patient.assigned_bed || ""
       });
     }
   }, [patient]);
@@ -59,7 +60,7 @@ function EditPatientModal({ patient, onClose, onSave }) {
         // 2. Currently assigned to this patient (so they can keep their bed)
         const unoccupiedBeds = bedsData.filter(bed => 
           !bed.is_occupied || 
-          (patient && bed.bed_number === patient.assigned_bed)
+          (patient && patient.assigned_bed && bed.id === patient.assigned_bed)
         );
         setAvailableBeds(unoccupiedBeds);
         
@@ -125,10 +126,10 @@ function EditPatientModal({ patient, onClose, onSave }) {
               <select name="assigned_bed" value={formData.assigned_bed} onChange={handleChange}>
                 <option value="">No bed assigned</option>
                 {availableBeds.map(bed => {
-                  const isCurrentBed = patient && bed.bed_number === patient.assigned_bed;
+                  const isCurrentBed = patient && patient.assigned_bed && bed.id === patient.assigned_bed;
                   return (
-                    <option key={bed.id} value={bed.bed_number}>
-                      Bed {bed.bed_number} - {bed.ward}
+                    <option key={bed.id} value={bed.id}>
+                      {bed.ward} - Bed {bed.bed_number}
                       {isCurrentBed ? ' (Currently Assigned)' : ''}
                       {bed.is_occupied && !isCurrentBed ? ' (Occupied)' : ''}
                     </option>
@@ -139,11 +140,10 @@ function EditPatientModal({ patient, onClose, onSave }) {
           </label>
           {formData.assigned_bed && (
             <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-              ℹ️ Selected: Bed {formData.assigned_bed}
-              {(() => {
-                const selectedBed = beds.find(b => b.bed_number === formData.assigned_bed);
-                return selectedBed ? ` in ${selectedBed.ward}` : '';
-              })()} 
+              ℹ️ Selected: {(() => {
+                const selectedBed = beds.find(b => b.id.toString() === formData.assigned_bed.toString());
+                return selectedBed ? `${selectedBed.ward} - Bed ${selectedBed.bed_number}` : 'Bed not found';
+              })()}
             </div>
           )}
           {!formData.assigned_doctor && (
@@ -158,7 +158,7 @@ function EditPatientModal({ patient, onClose, onSave }) {
                   <option value="">No doctor assigned</option>
                   {doctors.map(doctor => (
                     <option key={doctor.id} value={doctor.id}>
-                      Dr. {doctor.name} - {doctor.specialization}
+                      Dr. {doctor.full_name || `${doctor.first_name} ${doctor.last_name}`.trim()} - {doctor.specialization}
                     </option>
                   ))}
                 </select>
@@ -171,7 +171,7 @@ function EditPatientModal({ patient, onClose, onSave }) {
               <div className="doctor-display">
                 {(() => {
                   const doctor = doctors.find(d => d.id.toString() === formData.assigned_doctor.toString());
-                  return doctor ? `Dr. ${doctor.name} - ${doctor.specialization}` : 'Doctor information loading...';
+                  return doctor ? `Dr. ${doctor.full_name || `${doctor.first_name} ${doctor.last_name}`.trim()} - ${doctor.specialization}` : 'Doctor information loading...';
                 })()}
               </div>
               <button 
