@@ -16,12 +16,18 @@ class DoctorSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
+    full_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    available_days = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Doctor
         # Include all fields from Doctor model and the new user fields
-        fields = ['id', 'user', 'first_name', 'last_name', 'email', 'specialization', 'contact', 'availability']
+        fields = ['id', 'user', 'first_name', 'last_name', 'full_name', 'email', 'specialization', 'contact', 'availability', 'available_days']
         read_only_fields = ['user'] # User should not be changed directly via API
+    
+    def get_available_days(self, obj):
+        """Get list of available days for the doctor"""
+        return obj.get_available_days()
 
 class BedSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True, default=None)
@@ -42,10 +48,53 @@ class PatientSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     doctor_name = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
+    doctor_availability = serializers.CharField(source='doctor.availability', read_only=True)
+    appointment_day = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = Appointment
         fields = '__all__'
+    
+    def get_appointment_day(self, obj):
+        """Get the day name of the appointment date"""
+        import calendar
+        if obj.appointment_date:
+            return calendar.day_name[obj.appointment_date.weekday()]
+        return None
+    
+    def validate(self, data):
+        """Validate that the doctor is available on the selected day"""
+        appointment_date = data.get('appointment_date')
+        doctor = data.get('doctor')
+        
+        if appointment_date and doctor:
+            # Check if doctor is available on this date
+            if not doctor.is_available_on_date(appointment_date):
+                import calendar
+                day_name = calendar.day_name[appointment_date.weekday()]
+                available_days = doctor.get_available_days()
+                
+                if not available_days:
+                    raise serializers.ValidationError(
+                        f"Dr. {doctor.user.get_full_name()} has not set their availability. Please contact administration."
+                    )
+                else:
+                    raise serializers.ValidationError(
+                        f"Dr. {doctor.user.get_full_name()} is not available on {day_name}. "
+                        f"Available days: {', '.join(available_days)}"
+                    )
+        
+        return data
+    
+    def validate_appointment_date(self, value):
+        """Additional validation for appointment date"""
+        from datetime import date
+        
+        # Don't allow appointments in the past
+        if value < date.today():
+            raise serializers.ValidationError("Cannot book appointments for past dates.")
+        
+        return value
 
 class MedicineSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True)

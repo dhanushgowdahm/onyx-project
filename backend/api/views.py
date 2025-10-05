@@ -170,6 +170,51 @@ class DebugDataView(APIView):
             'user_role': request.user.role
         })
 
+# Doctor Availability Check View
+class DoctorAvailabilityView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Check doctor availability for a specific date or get all available dates"""
+        doctor_id = request.query_params.get('doctor_id')
+        date_str = request.query_params.get('date')  # Format: YYYY-MM-DD
+        
+        if not doctor_id:
+            return Response({'error': 'doctor_id parameter is required'}, status=400)
+        
+        try:
+            doctor = Doctor.objects.get(id=doctor_id)
+        except Doctor.DoesNotExist:
+            return Response({'error': 'Doctor not found'}, status=404)
+        
+        response_data = {
+            'doctor_id': doctor.id,
+            'doctor_name': doctor.user.get_full_name(),
+            'specialization': doctor.specialization,
+            'available_days': doctor.get_available_days()
+        }
+        
+        if date_str:
+            try:
+                from datetime import datetime
+                appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                
+                is_available = doctor.is_available_on_date(appointment_date)
+                import calendar
+                day_name = calendar.day_name[appointment_date.weekday()]
+                
+                response_data.update({
+                    'date': date_str,
+                    'day': day_name,
+                    'is_available': is_available,
+                    'message': f"Dr. {doctor.user.get_full_name()} is {'available' if is_available else 'not available'} on {day_name}, {date_str}"
+                })
+                
+            except ValueError:
+                return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        
+        return Response(response_data)
+
 # Redirection logic based on role (kept for backward compatibility)
 class RoleRedirectView(APIView):
     permission_classes = [IsAuthenticated]

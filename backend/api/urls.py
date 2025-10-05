@@ -10,7 +10,8 @@ from .views import (
     MedicineViewSet,
     DiagnosisViewSet,
     UserInfoView,
-    DebugDataView
+    DebugDataView,
+    DoctorAvailabilityView
 )
 
 # Create a router and register our viewsets with it.
@@ -28,6 +29,7 @@ urlpatterns = [
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('user-info/', UserInfoView.as_view(), name='user_info'),
     path('debug-data/', DebugDataView.as_view(), name='debug_data'),
+    path('doctor-availability/', DoctorAvailabilityView.as_view(), name='doctor_availability'),
     
     # Add the router-generated URLs
     path('', include(router.urls)),
