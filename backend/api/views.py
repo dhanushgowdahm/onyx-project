@@ -5,7 +5,8 @@ from django.contrib.auth import logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, permissions, serializers
+from rest_framework import viewsets, permissions
+from rest_framework import serializers
 from .serializers import MyTokenObtainPairSerializer, DoctorSerializer, PatientSerializer, BedSerializer, AppointmentSerializer, MedicineSerializer, DiagnosisSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import Doctor, Patient, Bed, Appointment, Medicine, Diagnosis
@@ -56,6 +57,36 @@ class PatientViewSet(viewsets.ModelViewSet):
         elif user.role in ['admin', 'receptionist']:
             return Patient.objects.all()
         return Patient.objects.none()
+    
+    def perform_create(self, serializer):
+        """Override to add bed validation during patient creation"""
+        assigned_bed = serializer.validated_data.get('assigned_bed')
+        
+        # Check if bed is already occupied
+        if assigned_bed and assigned_bed.is_occupied:
+            # Check if bed is occupied by another patient
+            existing_patient = Patient.objects.filter(assigned_bed=assigned_bed).first()
+            if existing_patient:
+                raise serializers.ValidationError(
+                    f"Bed {assigned_bed.bed_number} in {assigned_bed.ward} is already occupied by {existing_patient.name}"
+                )
+        
+        serializer.save()
+    
+    def perform_update(self, serializer):
+        """Override to add bed validation during patient updates"""
+        assigned_bed = serializer.validated_data.get('assigned_bed')
+        patient = self.get_object()
+        
+        # Check if bed is already occupied by another patient
+        if assigned_bed and assigned_bed != patient.assigned_bed and assigned_bed.is_occupied:
+            existing_patient = Patient.objects.filter(assigned_bed=assigned_bed).exclude(id=patient.id).first()
+            if existing_patient:
+                raise serializers.ValidationError(
+                    f"Bed {assigned_bed.bed_number} in {assigned_bed.ward} is already occupied by {existing_patient.name}"
+                )
+        
+        serializer.save()
 
 
 class BedViewSet(viewsets.ModelViewSet):
@@ -76,6 +107,32 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         elif user.role in ['admin', 'receptionist']:
             return Appointment.objects.all()
         return Appointment.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        # Debug logging for appointment creation
+        print(f"🗓️ Appointment creation request data: {request.data}")
+        print(f"🗓️ Appointment date received: {request.data.get('appointment_date')}")
+        
+        response = super().create(request, *args, **kwargs)
+        
+        # Log the created appointment data
+        if hasattr(response, 'data') and 'appointment_date' in response.data:
+            print(f"🗓️ Appointment created with date: {response.data['appointment_date']}")
+        
+        return response
+
+    def update(self, request, *args, **kwargs):
+        # Debug logging for appointment updates
+        print(f"🗓️ Appointment update request data: {request.data}")
+        print(f"🗓️ Appointment date received: {request.data.get('appointment_date')}")
+        
+        response = super().update(request, *args, **kwargs)
+        
+        # Log the updated appointment data
+        if hasattr(response, 'data') and 'appointment_date' in response.data:
+            print(f"🗓️ Appointment updated with date: {response.data['appointment_date']}")
+        
+        return response
 
 class MedicineViewSet(viewsets.ModelViewSet):
     serializer_class = MedicineSerializer

@@ -170,9 +170,9 @@
 }
 
 .status.cancelled {
-  background: #ffffff;
-  color: #000000;
-  border: 1px solid #000000;
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef5350;
 }
 
 .edit-btn,

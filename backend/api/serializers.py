@@ -90,11 +90,29 @@ class AppointmentSerializer(serializers.ModelSerializer):
         """Additional validation for appointment date"""
         from datetime import date
         
+        # Debug logging
+        print(f"🗓️ Backend - Validating appointment date: {value}")
+        print(f"🗓️ Backend - Date type: {type(value)}")
+        print(f"🗓️ Backend - Date string representation: {str(value)}")
+        print(f"🗓️ Backend - Today's date: {date.today()}")
+        
         # Don't allow appointments in the past
         if value < date.today():
             raise serializers.ValidationError("Cannot book appointments for past dates.")
         
         return value
+    
+    def create(self, validated_data):
+        """Override create to add debug logging"""
+        print(f"🗓️ Backend - Creating appointment with validated_data: {validated_data}")
+        print(f"🗓️ Backend - Appointment date in validated_data: {validated_data.get('appointment_date')}")
+        
+        appointment = super().create(validated_data)
+        
+        print(f"🗓️ Backend - Created appointment ID: {appointment.id}")
+        print(f"🗓️ Backend - Saved appointment date: {appointment.appointment_date}")
+        
+        return appointment
 
 class MedicineSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True)
