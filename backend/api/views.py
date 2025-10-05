@@ -133,8 +133,12 @@ class UserInfoView(APIView):
     
     def get(self, request):
         user = request.user
+        print(f"UserInfoView - User: {user.username}, First: '{user.first_name}', Last: '{user.last_name}'")  # Debug
+        
         response_data = {
             'username': user.username,
+            'first_name': user.first_name or '',  # Ensure empty string instead of None
+            'last_name': user.last_name or '',    # Ensure empty string instead of None
             'role': user.role,
             'user_id': user.id,
             'is_authenticated': True
@@ -278,3 +282,215 @@ class DoctorDashboardView(APIView):
         if request.user.role != 'doctor':
             return Response({"error": "Forbidden"}, status=403)
         return render(request, 'api/doctor_dashboard.html')
+
+# PDF Generation View
+class PatientReportPDFView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, patient_id):
+        """Generate a comprehensive PDF report for a patient"""
+        print(f"PDF generation requested for patient ID: {patient_id}")
+        print(f"User: {request.user}")
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.lib import colors
+            from django.http import HttpResponse
+            import datetime
+            
+            # Get patient data with error handling
+            try:
+                patient = Patient.objects.get(id=patient_id)
+            except Patient.DoesNotExist:
+                return Response({'error': 'Patient not found'}, status=404)
+            
+            medicines = Medicine.objects.filter(patient=patient)
+            diagnoses = Diagnosis.objects.filter(patient=patient)
+            
+            # Create the HttpResponse object with PDF headers for inline viewing
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="patient_report_{patient.name}_{datetime.date.today()}.pdf"'
+            
+            # Create the PDF document
+            doc = SimpleDocTemplate(response, pagesize=A4)
+            styles = getSampleStyleSheet()
+            story = []
+            
+            # Custom styles - Black and White theme
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=20,
+                spaceAfter=20,
+                textColor=colors.black,
+                alignment=1  # Center alignment
+            )
+            
+            header_style = ParagraphStyle(
+                'CustomHeader',
+                parent=styles['Heading2'],
+                fontSize=14,
+                spaceAfter=10,
+                textColor=colors.black
+            )
+            
+            # Title
+            story.append(Paragraph("Patient Medical Report", title_style))
+            story.append(Spacer(1, 20))
+            
+            # Patient Information Section
+            story.append(Paragraph("Patient Information", header_style))
+            
+            patient_data = [
+                ['Patient Name:', patient.name],
+                ['Patient ID:', str(patient.id)],
+                ['Age:', str(patient.age)],
+                ['Gender:', patient.gender],
+                ['Contact:', patient.contact],
+                ['Address:', patient.address],
+                ['Condition:', patient.condition],
+            ]
+            
+            patient_table = Table(patient_data, colWidths=[2*inch, 4*inch])
+            patient_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.white),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            
+            story.append(patient_table)
+            story.append(Spacer(1, 20))
+            
+            # Medicines Section
+            story.append(Paragraph("Prescribed Medicines", header_style))
+            
+            if medicines.exists():
+                medicine_data = [['Medicine Name', 'Dosage', 'Frequency', 'Date Prescribed']]
+                for med in medicines:
+                    frequency_display = ', '.join(med.frequency.split(',')) if med.frequency else 'As needed'
+                    medicine_data.append([
+                        med.medicine_name,
+                        med.dosage,
+                        frequency_display,
+                        med.created_at.strftime('%Y-%m-%d') if med.created_at else 'Not specified'
+                    ])
+                
+                medicine_table = Table(medicine_data, colWidths=[2*inch, 1.5*inch, 2*inch, 1.5*inch])
+                medicine_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 11),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ]))
+                
+                story.append(medicine_table)
+            else:
+                story.append(Paragraph("No medicines prescribed.", styles['Normal']))
+            
+            story.append(Spacer(1, 20))
+            
+            # Diagnoses Section
+            story.append(Paragraph("Medical Diagnoses", header_style))
+            
+            if diagnoses.exists():
+                diagnosis_data = [['Diagnosis', 'Description', 'Date']]
+                for diag in diagnoses:
+                    diagnosis_text = diag.diagnosis[:100] + '...' if len(diag.diagnosis) > 100 else diag.diagnosis
+                    diagnosis_data.append([
+                        diagnosis_text,
+                        'Diagnosis Details',  # Static description since no description field exists
+                        diag.created_at.strftime('%Y-%m-%d') if diag.created_at else 'Not specified'
+                    ])
+                
+                diagnosis_table = Table(diagnosis_data, colWidths=[2*inch, 3*inch, 2*inch])
+                diagnosis_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 11),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ]))
+                
+                story.append(diagnosis_table)
+            else:
+                story.append(Paragraph("No diagnoses recorded.", styles['Normal']))
+            
+            story.append(Spacer(1, 30))
+            
+            # Footer
+            footer_text = f"""
+            <para align="center">
+                <b>Report Generated:</b> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}<br/>
+                <b>Generated by:</b> {request.user.get_full_name() or request.user.username}<br/>
+                <i>Hospital Management System</i>
+            </para>
+            """
+            story.append(Paragraph(footer_text, styles['Normal']))
+            
+            # Build the PDF
+            doc.build(story)
+            
+            print(f"PDF generated successfully for patient: {patient.name}")
+            return response
+            
+        except Patient.DoesNotExist:
+            print(f"Patient not found: {patient_id}")
+            return Response({'error': 'Patient not found'}, status=404)
+        except Exception as e:
+            # Log the full error for debugging
+            import traceback
+            print(f"PDF Generation Error: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
+            return Response({'error': f'Failed to generate PDF: {str(e)}'}, status=500)
+
+# Simple test PDF endpoint
+class TestPDFView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Generate a simple test PDF"""
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.platypus import SimpleDocTemplate, Paragraph
+            from reportlab.lib.styles import getSampleStyleSheet
+            from django.http import HttpResponse
+            import datetime
+            
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="test_pdf_{datetime.date.today()}.pdf"'
+            
+            doc = SimpleDocTemplate(response, pagesize=A4)
+            styles = getSampleStyleSheet()
+            story = []
+            
+            story.append(Paragraph("Test PDF Generation", styles['Title']))
+            story.append(Paragraph("This is a test PDF to verify the functionality is working.", styles['Normal']))
+            story.append(Paragraph(f"Generated at: {datetime.datetime.now()}", styles['Normal']))
+            story.append(Paragraph(f"User: {request.user.username}", styles['Normal']))
+            
+            doc.build(story)
+            return response
+            
+        except Exception as e:
+            import traceback
+            print(f"Test PDF Error: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
+            return Response({'error': f'Failed to generate test PDF: {str(e)}'}, status=500)

@@ -11,7 +11,9 @@ from .views import (
     DiagnosisViewSet,
     UserInfoView,
     DebugDataView,
-    DoctorAvailabilityView
+    DoctorAvailabilityView,
+    PatientReportPDFView,
+    TestPDFView
 )
 
 # Create a router and register our viewsets with it.
@@ -30,6 +32,8 @@ urlpatterns = [
     path('user-info/', UserInfoView.as_view(), name='user_info'),
     path('debug-data/', DebugDataView.as_view(), name='debug_data'),
     path('doctor-availability/', DoctorAvailabilityView.as_view(), name='doctor_availability'),
+    path('patient-report-pdf/<int:patient_id>/', PatientReportPDFView.as_view(), name='patient_report_pdf'),
+    path('test-pdf/', TestPDFView.as_view(), name='test_pdf'),
     
     # Add the router-generated URLs
     path('', include(router.urls)),

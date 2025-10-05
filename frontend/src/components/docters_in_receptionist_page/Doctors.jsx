@@ -222,9 +222,7 @@ const Doctors = () => {
             value={search}
             onChange={handleSearchChange}
           />
-          <button className="add-doctor-btn" onClick={() => handleOpenModal()}>
-            + Add Doctor
-          </button>
+          
         </div>
         
         {/* Search Error Display */}

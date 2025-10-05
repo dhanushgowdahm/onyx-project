@@ -126,7 +126,6 @@ export default function Dashboard() {
               <tr>
                 <th>Patient Name</th>
                 <th>Bed No</th>
-                <th>Condition</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -139,7 +138,6 @@ export default function Dashboard() {
                       ? `${p.assigned_bed_ward} - Bed ${p.assigned_bed_number}` 
                       : "N/A"}
                   </td>
-                  <td>{p.condition}</td>
                   <td>
                     <button className="hd-btn-icon" onClick={() => setSelectedPatient(p)} title="View Patient Details">
                       👁️
@@ -154,7 +152,7 @@ export default function Dashboard() {
                 </tr>
               ))}
               {patients.length === 0 && !loading && (
-                <tr><td colSpan="4">No patients assigned to you.</td></tr>
+                <tr><td colSpan="3">No patients assigned to you.</td></tr>
               )}
             </tbody>
           </table>
