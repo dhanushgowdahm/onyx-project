@@ -133,12 +133,39 @@ class UserInfoView(APIView):
     
     def get(self, request):
         user = request.user
-        return Response({
+        response_data = {
             'username': user.username,
             'role': user.role,
             'user_id': user.id,
             'is_authenticated': True
-        })
+        }
+        
+        # If user is a doctor, include doctor profile information
+        if user.role == 'doctor':
+            try:
+                doctor_profile = user.doctor_profile
+                response_data.update({
+                    'doctor_info': {
+                        'id': doctor_profile.id,
+                        'specialization': doctor_profile.specialization,
+                        'contact': doctor_profile.contact,
+                        'availability': doctor_profile.availability,
+                        'available_days': doctor_profile.get_available_days(),
+                        'available_days_count': len(doctor_profile.get_available_days())
+                    }
+                })
+            except:
+                # Doctor profile doesn't exist
+                response_data.update({
+                    'doctor_info': {
+                        'specialization': 'Not Set',
+                        'availability': '',
+                        'available_days': [],
+                        'available_days_count': 0
+                    }
+                })
+        
+        return Response(response_data)
 
 # Debug view to check data
 class DebugDataView(APIView):
