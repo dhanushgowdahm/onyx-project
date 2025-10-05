@@ -7,6 +7,7 @@ import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
 import { patientsAPI, appointmentsAPI, medicinesAPI, diagnosesAPI, authAPI } from "../../services/api";
+import { getTodayString } from "../../utils/dateUtils";
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
@@ -38,9 +39,9 @@ export default function Dashboard() {
         setPatients(patientsData || []);
         setDoctorInfo(userInfoData.doctor_info || null);
         
-        // Filter for today's appointments
-        const today = new Date().toISOString().split('T')[0];
-        const todaysAppointments = (appointmentsData || []).filter(app => app.appointment_date === today);
+        // Filter for today's appointments using consistent date format
+        const todayStr = getTodayString();
+        const todaysAppointments = (appointmentsData || []).filter(app => app.appointment_date === todayStr);
         setAppointments(todaysAppointments);
 
       } catch (err) {
@@ -96,6 +97,33 @@ export default function Dashboard() {
     if (patient) {
       setSelectedPatient(null);
       setDiagnosisPatient(patient);
+    }
+  };
+
+  const handleAppointmentStatusChange = async (appointmentId, newStatus) => {
+    try {
+      // Find the appointment
+      const appointment = appointments.find(a => a.id === appointmentId);
+      if (!appointment) {
+        alert('Appointment not found');
+        return;
+      }
+
+      // Update the appointment status
+      const updatedAppointment = { ...appointment, status: newStatus };
+      await appointmentsAPI.update(appointmentId, updatedAppointment);
+      
+      // Update local state
+      setAppointments(prevAppointments => 
+        prevAppointments.map(a => 
+          a.id === appointmentId ? { ...a, status: newStatus } : a
+        )
+      );
+
+      alert(`Appointment ${newStatus.toLowerCase()} successfully!`);
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert(`Failed to ${newStatus.toLowerCase()} appointment: ${error.message}`);
     }
   };
 
@@ -172,8 +200,35 @@ export default function Dashboard() {
                 </div>
                 <div className="hd-apt-meta">
                   <div className="hd-time">🕐 {a.appointment_time}</div>
-                  <div className="hd-status">{a.status}</div>
+                  <div className={`hd-status ${a.status.toLowerCase()}`}>{a.status}</div>
                 </div>
+                {/* Action buttons for scheduled appointments */}
+                {a.status === 'scheduled' && (
+                  <div className="hd-apt-actions">
+                    <button 
+                      className="hd-btn hd-btn-success hd-btn-sm"
+                      onClick={() => handleAppointmentStatusChange(a.id, 'completed')}
+                      title="Mark as Completed"
+                    >
+                      ✓ Complete
+                    </button>
+                    <button 
+                      className="hd-btn hd-btn-danger hd-btn-sm"
+                      onClick={() => handleAppointmentStatusChange(a.id, 'cancelled')}
+                      title="Cancel Appointment"
+                    >
+                      ✗ Cancel
+                    </button>
+                  </div>
+                )}
+                {/* Show status for non-scheduled appointments */}
+                {a.status !== 'scheduled' && (
+                  <div className="hd-apt-final-status">
+                    <span className={`hd-status-badge hd-status-${a.status.toLowerCase()}`}>
+                      {a.status === 'completed' ? '✓ Completed' : '✗ Cancelled'}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
             {appointments.length === 0 && !loading && <div>No appointments scheduled for today.</div>}

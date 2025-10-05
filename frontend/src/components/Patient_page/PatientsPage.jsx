@@ -81,13 +81,22 @@ function PatientsPage() {
       };
       
       // Helper function to safely get doctor name
-      const safeDoctorName = (doctorId) => {
+      const safeDoctorName = (patient) => {
         try {
-          if (!doctorId) return 'Not assigned';
-          const doctor = doctors.find(d => d && d.id && d.id.toString() === doctorId.toString());
-          return doctor ? `Dr. ${doctor.name}` : 'Unknown Doctor';
+          // Use serialized doctor name if available
+          if (patient.assigned_doctor_name) {
+            return `Dr. ${patient.assigned_doctor_name}`;
+          }
+          
+          // Fallback to lookup
+          if (patient.assigned_doctor && doctors && doctors.length > 0) {
+            const doctor = doctors.find(d => d && d.id && d.id.toString() === patient.assigned_doctor.toString());
+            return doctor ? `Dr. ${doctor.full_name}` : 'Unknown Doctor';
+          }
+          
+          return 'Not assigned';
         } catch (error) {
-          console.warn('Error in safeDoctorName:', error, 'doctorId:', doctorId);
+          console.warn('Error in safeDoctorName:', error, 'patient:', patient);
           return 'Not assigned';
         }
       };
@@ -97,32 +106,35 @@ function PatientsPage() {
           if (!p) return false;
           
           // Helper function to get full bed display for search
-          const getBedDisplayForSearch = (assignedBedId) => {
+          const getBedDisplayForSearch = (patient) => {
             try {
-              if (!assignedBedId) return '';
-              
-              // If already in "Ward X - BedNumber" format (legacy), return as is
-              if (assignedBedId.toString().includes(' - ')) {
-                return assignedBedId.toString();
+              // Try serialized bed info first
+              if (patient.assigned_bed_number && patient.assigned_bed_ward) {
+                return `${patient.assigned_bed_ward} - Bed ${patient.assigned_bed_number}`;
               }
               
-              // Look up bed by ID (since API returns bed ID)
-              const bed = beds.find(b => b && b.id && b.id.toString() === assignedBedId.toString());
-              return bed ? `${bed.ward} ${bed.bed_number}` : assignedBedId.toString();
+              // Fallback to bed lookup
+              if (patient.assigned_bed && beds && beds.length > 0) {
+                const bed = beds.find(b => b && b.id && b.id.toString() === patient.assigned_bed.toString());
+                return bed ? `${bed.ward} - Bed ${bed.bed_number}` : '';
+              }
+              
+              return '';
             } catch (error) {
-              return assignedBedId ? assignedBedId.toString() : '';
+              return '';
             }
           };
 
           const matches = (
             safeIncludes(p.name) ||
             safeIncludes(p.id) ||
-            safeIncludes(p.assigned_bed) ||
-            getBedDisplayForSearch(p.assigned_bed).toLowerCase().includes(searchLower) ||
+            safeIncludes(p.assigned_bed_number) ||
+            safeIncludes(p.assigned_bed_ward) ||
+            getBedDisplayForSearch(p).toLowerCase().includes(searchLower) ||
             safeIncludes(p.contact) ||
             safeIncludes(p.gender) ||
             safeIncludes(p.age) ||
-            safeDoctorName(p.assigned_doctor).toLowerCase().includes(searchLower)
+            safeDoctorName(p).toLowerCase().includes(searchLower)
           );
           
           return matches;
@@ -152,11 +164,20 @@ function PatientsPage() {
   };
 
   // Helper function to get doctor name by ID
-  const getDoctorName = React.useCallback((doctorId) => {
+  const getDoctorName = React.useCallback((patient) => {
     try {
-      if (!doctorId || !doctors || doctors.length === 0) return 'Not assigned';
-      const doctor = doctors.find(d => d && d.id && d.id.toString() === doctorId.toString());
-      return doctor && doctor.name ? `Dr. ${doctor.name}` : 'Unknown Doctor';
+      // First try to use the serialized doctor name from API response
+      if (patient.assigned_doctor_name) {
+        return `Dr. ${patient.assigned_doctor_name}`;
+      }
+      
+      // Fallback: if assigned_doctor ID exists, look it up in the doctors array
+      if (patient.assigned_doctor && doctors && doctors.length > 0) {
+        const doctor = doctors.find(d => d && d.id && d.id.toString() === patient.assigned_doctor.toString());
+        return doctor && doctor.full_name ? `Dr. ${doctor.full_name}` : 'Unknown Doctor';
+      }
+      
+      return 'Not assigned';
     } catch (error) {
       console.warn('Error in getDoctorName:', error);
       return 'Not assigned';
@@ -164,21 +185,23 @@ function PatientsPage() {
   }, [doctors]);
 
   // Helper function to get bed display with ward info
-  const getBedDisplay = React.useCallback((assignedBedId) => {
+  const getBedDisplay = React.useCallback((patient) => {
     try {
-      if (!assignedBedId || !beds || beds.length === 0) return 'Not assigned';
-      
-      // Handle case where bed is already in "Ward X - BedNumber" format (legacy data)
-      if (assignedBedId.toString().includes(' - ')) {
-        return assignedBedId.toString(); // Already in correct format
+      // First try to use the serialized bed info from the API response
+      if (patient.assigned_bed_number && patient.assigned_bed_ward) {
+        return `${patient.assigned_bed_ward} - Bed ${patient.assigned_bed_number}`;
       }
       
-      // Look up the bed by ID (since API returns bed ID)
-      const bed = beds.find(b => b && b.id && b.id.toString() === assignedBedId.toString());
-      return bed ? `${bed.ward} ${bed.bed_number}` : `Bed ID: ${assignedBedId}`; // Show bed number with ward
+      // Fallback: if assigned_bed ID exists, look it up in the beds array
+      if (patient.assigned_bed && beds && beds.length > 0) {
+        const bed = beds.find(b => b && b.id && b.id.toString() === patient.assigned_bed.toString());
+        return bed ? `${bed.ward} - Bed ${bed.bed_number}` : 'Bed not found';
+      }
+      
+      return 'Not assigned';
     } catch (error) {
-      console.warn('Error in getBedDisplay:', error, 'assignedBedId:', assignedBedId);
-      return assignedBedId ? `Bed ID: ${assignedBedId}` : 'Not assigned';
+      console.warn('Error in getBedDisplay:', error, 'patient:', patient);
+      return 'Not assigned';
     }
   }, [beds]);
 
@@ -188,7 +211,7 @@ function PatientsPage() {
       const patientData = {
         ...newPatient,
         age: parseInt(newPatient.age) || 0, // Ensure age is a number
-        assigned_bed: null, // Set to null for now, will be handled separately
+        assigned_bed: newPatient.assigned_bed ? parseInt(newPatient.assigned_bed) : null, // Convert to bed ID or null
         assigned_doctor: newPatient.assigned_doctor || null
       };
       
@@ -233,13 +256,15 @@ function PatientsPage() {
       const patientData = {
         ...updatedPatient,
         age: parseInt(updatedPatient.age) || 0,
-        assigned_bed: null, // Will be handled separately
+        assigned_bed: updatedPatient.assigned_bed ? parseInt(updatedPatient.assigned_bed) : null, // Convert to bed ID or null
         assigned_doctor: updatedPatient.assigned_doctor || null
       };
       
+      console.log('Updating patient with data:', patientData);
       await patientsAPI.update(updatedPatient.id, patientData);
       setEditingPatient(null);
       await fetchPatients();
+      alert('Patient updated successfully!');
     } catch (error) {
       console.error('Update error:', error);
       const errorMessage = error.message || 'Unknown error occurred';
@@ -343,8 +368,8 @@ function PatientsPage() {
                     <td>{p.age || 'N/A'}</td>
                     <td>{p.gender || 'N/A'}</td>
                     <td>{p.contact || 'N/A'}</td>
-                    <td>{getBedDisplay(p.assigned_bed)}</td>
-                    <td>{getDoctorName(p.assigned_doctor)}</td>
+                    <td>{getBedDisplay(p)}</td>
+                    <td>{getDoctorName(p)}</td>
                     <td>
                       <button
                         className="icon-btn view-patient-btn"

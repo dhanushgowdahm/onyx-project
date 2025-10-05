@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./AddPatientModal.css";
-import { doctorsAPI } from "../../services/api";
+import { doctorsAPI, bedsAPI } from "../../services/api";
 
 function AddPatientModal({ onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -16,6 +16,9 @@ function AddPatientModal({ onClose, onSave }) {
   
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
+  const [beds, setBeds] = useState([]);
+  const [loadingBeds, setLoadingBeds] = useState(true);
+  const [availableBeds, setAvailableBeds] = useState([]);
 
   // Fetch doctors for dropdown
   useEffect(() => {
@@ -32,6 +35,30 @@ function AddPatientModal({ onClose, onSave }) {
     };
     
     fetchDoctors();
+  }, []);
+
+  // Fetch beds for dropdown
+  useEffect(() => {
+    const fetchBeds = async () => {
+      try {
+        setLoadingBeds(true);
+        const bedsData = await bedsAPI.getAll();
+        setBeds(bedsData);
+        
+        // Filter only unoccupied beds for new patient assignment
+        const unoccupiedBeds = bedsData.filter(bed => !bed.is_occupied);
+        setAvailableBeds(unoccupiedBeds);
+        
+        console.log('All beds:', bedsData);
+        console.log('Available beds for new patient:', unoccupiedBeds);
+      } catch (error) {
+        console.error('Error fetching beds:', error);
+      } finally {
+        setLoadingBeds(false);
+      }
+    };
+    
+    fetchBeds();
   }, []);
 
   const handleChange = (e) => {
@@ -90,8 +117,29 @@ function AddPatientModal({ onClose, onSave }) {
           </label>
           <label>
             Assigned Bed:
-            <input name="assigned_bed" value={formData.assigned_bed} onChange={handleChange} />
+            {loadingBeds ? (
+              <select disabled>
+                <option>Loading beds...</option>
+              </select>
+            ) : (
+              <select name="assigned_bed" value={formData.assigned_bed} onChange={handleChange}>
+                <option value="">No bed assigned</option>
+                {availableBeds.map(bed => (
+                  <option key={bed.id} value={bed.id}>
+                    {bed.ward} - Bed {bed.bed_number}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
+          {formData.assigned_bed && (
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+              ℹ️ Selected: {(() => {
+                const selectedBed = beds.find(b => b.id.toString() === formData.assigned_bed.toString());
+                return selectedBed ? `${selectedBed.ward} - Bed ${selectedBed.bed_number}` : 'Bed not found';
+              })()}
+            </div>
+          )}
           <label>
             Assign Doctor (Optional):
             {loadingDoctors ? (
@@ -103,7 +151,7 @@ function AddPatientModal({ onClose, onSave }) {
                 <option value="">No doctor assigned</option>
                 {doctors.map(doctor => (
                   <option key={doctor.id} value={doctor.id}>
-                    Dr. {doctor.name} - {doctor.specialization}
+                    Dr. {doctor.full_name || `${doctor.first_name} ${doctor.last_name}`.trim()} - {doctor.specialization}
                   </option>
                 ))}
               </select>

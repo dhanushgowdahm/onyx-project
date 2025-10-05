@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Appointment.css";
 import { appointmentsAPI, patientsAPI, doctorsAPI } from "../../services/api";
+import { getTodayString } from "../../utils/dateUtils";
 
 const Appointment = () => {
   const [appointments, setAppointments] = useState([]);
@@ -88,6 +89,29 @@ const Appointment = () => {
         ...newAppointment,
     };
 
+    // Enhanced debug logging
+    console.log('🗓️ Frontend - Sending appointment data:', appointmentData);
+    console.log('🗓️ Frontend - Appointment date being sent:', appointmentData.appointment_date);
+    console.log('🗓️ Frontend - Date input value type:', typeof appointmentData.appointment_date);
+    console.log('🗓️ Frontend - Date object from string:', new Date(appointmentData.appointment_date));
+    console.log('🗓️ Frontend - Date toISOString():', new Date(appointmentData.appointment_date).toISOString());
+    console.log('🗓️ Frontend - Date toLocaleDateString():', new Date(appointmentData.appointment_date).toLocaleDateString());
+    console.log('🗓️ Frontend - User timezone offset (minutes):', new Date().getTimezoneOffset());
+    console.log('🗓️ Frontend - Current local time:', new Date().toLocaleString());
+    
+    // Ensure date is in YYYY-MM-DD format to avoid timezone issues
+    if (appointmentData.appointment_date && typeof appointmentData.appointment_date === 'string') {
+      const dateStr = appointmentData.appointment_date;
+      console.log('🗓️ Frontend - Ensuring date format is correct:', dateStr);
+      
+      // If it's already in YYYY-MM-DD format, use it as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        console.log('🗓️ Frontend - Date is already in YYYY-MM-DD format');
+      } else {
+        console.log('🗓️ Frontend - Date format needs correction');
+      }
+    }
+
     try {
         if (editingAppointment) {
             await appointmentsAPI.update(editingAppointment.id, appointmentData);
@@ -159,19 +183,18 @@ const Appointment = () => {
   }
 
   const calculateStats = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayString();
     
     const todaysAppointments = appointments.filter(
       (app) => app.appointment_date === todayStr && app.status !== "cancelled"
     ).length;
 
-    const upcomingAppointments = appointments.filter((app) => {
-      return app.appointment_date > todayStr && app.status === "scheduled";
-    }).length;
+    // Show all appointments including cancelled ones for complete overview
+    const allAppointments = appointments.length; // Show all appointments regardless of status
 
     return {
       today: todaysAppointments,
-      upcoming: upcomingAppointments,
+      upcoming: allAppointments, // Changed from upcomingAppointments to allAppointments
       patients: patients.length,
       doctors: doctors.length
     };
@@ -193,7 +216,7 @@ const Appointment = () => {
 
       <div className="stats">
         <div>Today's <br /> {loading ? "..." : stats.today}</div>
-        <div>Upcoming <br /> {loading ? "..." : stats.upcoming}</div>
+        <div>All Appointments <br /> {loading ? "..." : stats.upcoming}</div>
         <div>Patients <br /> {loading ? "..." : stats.patients}</div>
         <div>Doctors <br /> {loading ? "..." : stats.doctors}</div>
       </div>
@@ -227,7 +250,12 @@ const Appointment = () => {
                     {getDoctorName(a.doctor)}
                     <div className="subtext">{doctors.find(d => d.id === a.doctor)?.specialization}</div>
                   </td>
-                  <td>{new Date(a.appointment_date).toLocaleDateString()}</td>
+                  <td>
+                    {a.appointment_date}
+                    <div className="subtext" style={{fontSize: '10px', color: '#999'}}>
+                      Raw: {a.appointment_date} | Parsed: {new Date(a.appointment_date + 'T00:00:00').toLocaleDateString()}
+                    </div>
+                  </td>
                   <td>{a.appointment_time}</td>
                   <td>
                     <select
@@ -295,7 +323,12 @@ const Appointment = () => {
               type="date"
               value={newAppointment.appointment_date}
               onChange={(e) => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
-              min={new Date().toISOString().split('T')[0]} // Prevent past dates
+              min={(() => {
+                const today = new Date();
+                return today.getFullYear() + '-' + 
+                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(today.getDate()).padStart(2, '0');
+              })()} // Prevent past dates
             />
 
             {checkingAvailability && (

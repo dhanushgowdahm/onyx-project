@@ -196,11 +196,31 @@
 }
 
 .hd-status {
-  color: #0047ff;
   font-size: 12px;
   margin-top: 4px;
   text-transform: capitalize;
   font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.hd-status.scheduled {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+}
+
+.hd-status.completed {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+
+.hd-status.cancelled {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
 }
 
 /* Stats Row */
@@ -766,6 +786,85 @@
   border: 2px solid #9ca3af;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+/* Appointment Action Button Styles */
+.hd-btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  margin: 0 2px;
+  min-width: 70px;
+}
+
+.hd-btn-success {
+  background: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+}
+
+.hd-btn-success:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+.hd-btn-danger {
+  background: #ef4444;
+  color: white;
+  border: 1px solid #ef4444;
+}
+
+.hd-btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.hd-apt-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.hd-apt-final-status {
+  margin-top: 8px;
+}
+
+.hd-status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hd-status-completed {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.hd-status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Enhanced appointment card styling */
+.hd-appointment {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.hd-appointment:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .hd-modal-grid {
