@@ -6,11 +6,12 @@ import MedicationModal from "./MedicationModal";
 import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { patientsAPI, appointmentsAPI } from "../../services/api";
+import { patientsAPI, appointmentsAPI, medicinesAPI, diagnosesAPI, authAPI } from "../../services/api";
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [doctorInfo, setDoctorInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,11 +27,16 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         // Fetch data specific to the logged-in doctor
-        const [patientsData, appointmentsData] = await Promise.all([
+        const [patientsData, appointmentsData, userInfoData] = await Promise.all([
           patientsAPI.getAll(), // This now gets doctor-specific patients from the backend
           appointmentsAPI.getAll(), // This now gets doctor-specific appointments
+          authAPI.getUserInfo(), // Get current doctor information
         ]);
+        console.log("Patients data received:", patientsData);
+        console.log("User info received:", userInfoData);
+        
         setPatients(patientsData || []);
+        setDoctorInfo(userInfoData.doctor_info || null);
         
         // Filter for today's appointments
         const today = new Date().toISOString().split('T')[0];
@@ -53,14 +59,28 @@ export default function Dashboard() {
     navigate("/login");
   };
 
-  const handlePrescribe = (patientId, medicationDetails) => {
-    console.log(`Prescribed for patient ${patientId}:`, medicationDetails);
-    alert(`Medication prescribed successfully for ${prescribePatient.name}`);
+  const handlePrescribe = async (patientId, medicineData) => {
+    console.log(`Medicine prescribed for patient ${patientId}:`, medicineData);
+    // Close the prescription modal and reopen patient view to show updated data
+    setPrescribePatient(null);
+    // If patient modal was open, keep it open to show updated data
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Small delay to ensure API update is complete
+      setTimeout(() => setSelectedPatient(patient), 100);
+    }
   };
 
-  const handleSaveDiagnosis = (patientId, diagnosisData) => {
+  const handleSaveDiagnosis = async (patientId, diagnosisData) => {
     console.log(`Diagnosis saved for patient ${patientId}:`, diagnosisData);
-    alert(`Diagnosis saved successfully for ${diagnosisPatient.name}`);
+    // Close the diagnosis modal and reopen patient view to show updated data
+    setDiagnosisPatient(null);
+    // If patient modal was open, keep it open to show updated data
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Small delay to ensure API update is complete
+      setTimeout(() => setSelectedPatient(patient), 100);
+    }
   };
 
   const handleAddMedication = (patientId) => {
@@ -114,14 +134,21 @@ export default function Dashboard() {
               {patients.map((p) => (
                 <tr key={p.id}>
                   <td>{p.name}</td>
-                  <td>{p.assigned_bed ? `Bed ${p.assigned_bed}` : "N/A"}</td>
+                  <td>
+                    {p.assigned_bed_number 
+                      ? `${p.assigned_bed_ward} - Bed ${p.assigned_bed_number}` 
+                      : "N/A"}
+                  </td>
                   <td>{p.condition}</td>
                   <td>
                     <button className="hd-btn-icon" onClick={() => setSelectedPatient(p)} title="View Patient Details">
                       👁️
                     </button>
-                    <button className="hd-btn-icon" onClick={() => setPrescribePatient(p)} title="Prescribe Medication">
+                    <button className="hd-btn-icon" onClick={() => setPrescribePatient(p)} title="Prescribe Medicine">
                       💊
+                    </button>
+                    <button className="hd-btn-icon" onClick={() => setDiagnosisPatient(p)} title="Add Diagnosis">
+                      🩺
                     </button>
                   </td>
                 </tr>
@@ -159,8 +186,16 @@ export default function Dashboard() {
       <div className="hd-stats-row">
         <StatsCard title="Total Patients" value={patients.length} icon="👥" />
         <StatsCard title="Today's Appointments" value={appointments.length} icon="📅" />
-        <StatsCard title="Specialization" value="Cardiology" icon="💊" />
-        <StatsCard title="Available Days" value="3" icon="🕐" />
+        <StatsCard 
+          title="Specialization" 
+          value={doctorInfo?.specialization || "Not Set"} 
+          icon="💊" 
+        />
+        <StatsCard 
+          title="Available Days" 
+          value={doctorInfo?.available_days_count || 0} 
+          icon="🕐" 
+        />
       </div>
 
       {selectedPatient && (

@@ -83,10 +83,13 @@ export const authAPI = {
 // Patients API
 export const patientsAPI = {
   getAll: async () => {
+    console.log('Fetching all patients...');
     const response = await fetch(`${API_BASE_URL}/patients/`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse(response);
+    console.log('Patients API response:', result);
+    return result;
   },
 
   create: async (patientData) => {
@@ -176,6 +179,20 @@ export const doctorsAPI = {
 
   getById: async (id) => {
     const response = await fetch(`${API_BASE_URL}/doctors/${id}/`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  checkAvailability: async (doctorId, date) => {
+    const response = await fetch(`${API_BASE_URL}/doctor-availability/?doctor_id=${doctorId}&date=${date}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  getAvailability: async (doctorId) => {
+    const response = await fetch(`${API_BASE_URL}/doctor-availability/?doctor_id=${doctorId}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
@@ -274,10 +291,128 @@ export const appointmentsAPI = {
   }
 };
 
+// Medicines API
+export const medicinesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/medicines/`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  create: async (medicineData) => {
+    console.log('Creating medicine with data:', medicineData);
+    const response = await fetch(`${API_BASE_URL}/medicines/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(medicineData),
+    });
+    return handleResponse(response);
+  },
+
+  update: async (id, medicineData) => {
+    const response = await fetch(`${API_BASE_URL}/medicines/${id}/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(medicineData),
+    });
+    return handleResponse(response);
+  },
+
+  delete: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/medicines/${id}/`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return true;
+  },
+
+  getById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/medicines/${id}/`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  getByPatient: async (patientId) => {
+    console.log(`Fetching medicines for patient ID: ${patientId}`);
+    console.log(`API URL: ${API_BASE_URL}/medicines/?patient=${patientId}`);
+    const response = await fetch(`${API_BASE_URL}/medicines/?patient=${patientId}`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await handleResponse(response);
+    console.log(`Medicines API response for patient ${patientId}:`, result);
+    return result;
+  }
+};
+
+// Diagnoses API
+export const diagnosesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/diagnoses/`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  create: async (diagnosisData) => {
+    console.log('Creating diagnosis with data:', diagnosisData);
+    const response = await fetch(`${API_BASE_URL}/diagnoses/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(diagnosisData),
+    });
+    return handleResponse(response);
+  },
+
+  update: async (id, diagnosisData) => {
+    const response = await fetch(`${API_BASE_URL}/diagnoses/${id}/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(diagnosisData),
+    });
+    return handleResponse(response);
+  },
+
+  delete: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/diagnoses/${id}/`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return true;
+  },
+
+  getById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/diagnoses/${id}/`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  getByPatient: async (patientId) => {
+    console.log(`Fetching diagnoses for patient ID: ${patientId}`);
+    console.log(`API URL: ${API_BASE_URL}/diagnoses/?patient=${patientId}`);
+    const response = await fetch(`${API_BASE_URL}/diagnoses/?patient=${patientId}`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await handleResponse(response);
+    console.log(`Diagnoses API response for patient ${patientId}:`, result);
+    return result;
+  }
+};
+
 export default {
   authAPI,
   patientsAPI,
   doctorsAPI,
   bedsAPI,
-  appointmentsAPI
+  appointmentsAPI,
+  medicinesAPI,
+  diagnosesAPI
 };
