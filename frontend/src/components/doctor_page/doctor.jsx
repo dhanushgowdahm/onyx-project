@@ -6,11 +6,12 @@ import MedicationModal from "./MedicationModal";
 import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { patientsAPI, appointmentsAPI, medicinesAPI, diagnosesAPI } from "../../services/api";
+import { patientsAPI, appointmentsAPI, medicinesAPI, diagnosesAPI, authAPI } from "../../services/api";
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [doctorInfo, setDoctorInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,12 +27,16 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         // Fetch data specific to the logged-in doctor
-        const [patientsData, appointmentsData] = await Promise.all([
+        const [patientsData, appointmentsData, userInfoData] = await Promise.all([
           patientsAPI.getAll(), // This now gets doctor-specific patients from the backend
           appointmentsAPI.getAll(), // This now gets doctor-specific appointments
+          authAPI.getUserInfo(), // Get current doctor information
         ]);
         console.log("Patients data received:", patientsData);
+        console.log("User info received:", userInfoData);
+        
         setPatients(patientsData || []);
+        setDoctorInfo(userInfoData.doctor_info || null);
         
         // Filter for today's appointments
         const today = new Date().toISOString().split('T')[0];
@@ -181,8 +186,16 @@ export default function Dashboard() {
       <div className="hd-stats-row">
         <StatsCard title="Total Patients" value={patients.length} icon="👥" />
         <StatsCard title="Today's Appointments" value={appointments.length} icon="📅" />
-        <StatsCard title="Specialization" value="Cardiology" icon="💊" />
-        <StatsCard title="Available Days" value="3" icon="🕐" />
+        <StatsCard 
+          title="Specialization" 
+          value={doctorInfo?.specialization || "Not Set"} 
+          icon="💊" 
+        />
+        <StatsCard 
+          title="Available Days" 
+          value={doctorInfo?.available_days_count || 0} 
+          icon="🕐" 
+        />
       </div>
 
       {selectedPatient && (
