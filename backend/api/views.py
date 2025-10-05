@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import viewsets, permissions
 from .models import Doctor, Patient, Bed, Appointment
 from .serializers import DoctorSerializer, PatientSerializer, BedSerializer, AppointmentSerializer
+from .permissions import IsAdminOrReceptionist, IsDoctor # Import new permissions
 
 # Custom Login View - Standard JWT approach, only returns tokens
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -38,29 +39,60 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         
         return response
 
-class IsAdminOrReceptionist(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role in ['admin', 'receptionist']
-
 class DoctorViewSet(viewsets.ModelViewSet):
     queryset = Doctor.objects.all()
     serializer_class = DoctorSerializer
+    # Only receptionists and admins can manage doctors
     permission_classes = [IsAdminOrReceptionist]
 
 class PatientViewSet(viewsets.ModelViewSet):
-    queryset = Patient.objects.all()
     serializer_class = PatientSerializer
-    permission_classes = [IsAdminOrReceptionist]
+    permission_classes = [IsAuthenticated] # Allow any authenticated user
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the patients
+        for the currently authenticated user.
+        """
+        user = self.request.user
+        if user.role == 'doctor':
+            # If the user is a doctor, find their Doctor profile
+            try:
+                doctor_profile = Doctor.objects.get(name__icontains=user.username) # This is a simple link, a direct foreign key on CustomUser would be better
+                return Patient.objects.filter(assigned_doctor=doctor_profile)
+            except Doctor.DoesNotExist:
+                return Patient.objects.none() # No patients if no doctor profile
+        elif user.role in ['admin', 'receptionist']:
+            return Patient.objects.all()
+        return Patient.objects.none()
+
 
 class BedViewSet(viewsets.ModelViewSet):
     queryset = Bed.objects.all()
     serializer_class = BedSerializer
+    # Only receptionists and admins can manage beds
     permission_classes = [IsAdminOrReceptionist]
 
 class AppointmentViewSet(viewsets.ModelViewSet):
-    queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
-    permission_classes = [IsAdminOrReceptionist]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned appointments to a given user,
+        by filtering against a `username` query parameter in the URL.
+        """
+        user = self.request.user
+        if user.role == 'doctor':
+            try:
+                doctor_profile = Doctor.objects.get(name__icontains=user.username)
+                return Appointment.objects.filter(doctor=doctor_profile)
+            except Doctor.DoesNotExist:
+                return Appointment.objects.none()
+        elif user.role in ['admin', 'receptionist']:
+            return Appointment.objects.all()
+        return Appointment.objects.none()
+
 
 # Login Page View
 def login_view(request):

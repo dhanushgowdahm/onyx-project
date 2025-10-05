@@ -1,0 +1,88 @@
+.patients-page {
+  padding-left: 150px;
+  padding-right: 150px;
+  padding-top: 50px;
+}
+
+.title {
+  margin-bottom: 15px;
+}
+
+.patients-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.top-bar input {
+  width: 70%;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.add-patient-btn {
+  background: #0a0a23;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.bold-cell {
+  font-weight: 600;
+}
+
+.icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.error-message {
+  text-align: center;
+  padding: 40px;
+  color: #d32f2f;
+}
+
+.error-message button {
+  margin-top: 10px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.error-message button:hover {
+  background: #b71c1c;
+}

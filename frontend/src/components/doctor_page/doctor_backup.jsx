@@ -1,51 +1,27 @@
 // src/components/doctor_page/doctor.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PatientModal from "./PatientModal";
 import StatsCard from "./StatsCard";
 import MedicationModal from "./MedicationModal";
-import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { patientsAPI, appointmentsAPI } from "../../services/api";
 
-export default function Dashboard() {
-  const [patients, setPatients] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+/*
+Props:
+  - patients (optional array) 
+  - appointments (optional array)
+  - apiBaseUrl (optional string) - overrides VITE_API_BASE_URL
+*/
+export default function Dashboard({ patients: patientsProp, appointments: appointmentsProp, apiBaseUrl }) {
+  const [patients, setPatients] = useState(patientsProp || []);
+  const [appointments, setAppointments] = useState(appointmentsProp || []);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescribePatient, setPrescribePatient] = useState(null);
-  const [diagnosisPatient, setDiagnosisPatient] = useState(null);
+  const [loading, setLoading] = useState(!patientsProp || !appointmentsProp);
+  const [error, setError] = useState(null);
 
+  const base = apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        // Fetch data specific to the logged-in doctor
-        const [patientsData, appointmentsData] = await Promise.all([
-          patientsAPI.getAll(), // This now gets doctor-specific patients from the backend
-          appointmentsAPI.getAll(), // This now gets doctor-specific appointments
-        ]);
-        setPatients(patientsData || []);
-        
-        // Filter for today's appointments
-        const today = new Date().toISOString().split('T')[0];
-        const todaysAppointments = (appointmentsData || []).filter(app => app.appointment_date === today);
-        setAppointments(todaysAppointments);
-
-      } catch (err) {
-        console.error("Dashboard load error:", err);
-        setError("Failed to load dashboard data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -55,32 +31,52 @@ export default function Dashboard() {
 
   const handlePrescribe = (patientId, medicationDetails) => {
     console.log(`Prescribed for patient ${patientId}:`, medicationDetails);
+    // Here you can add API call to save the prescription
     alert(`Medication prescribed successfully for ${prescribePatient.name}`);
   };
 
-  const handleSaveDiagnosis = (patientId, diagnosisData) => {
-    console.log(`Diagnosis saved for patient ${patientId}:`, diagnosisData);
-    alert(`Diagnosis saved successfully for ${diagnosisPatient.name}`);
-  };
+  useEffect(() => {
+    if (patientsProp && appointmentsProp) return;
 
-  const handleAddMedication = (patientId) => {
-    const patient = patients.find(p => p.id === patientId);
-    if (patient) {
-      setSelectedPatient(null);
-      setPrescribePatient(patient);
+    if (!base) {
+      setPatients([]);
+      setAppointments([]);
+      setLoading(false);
+      return;
     }
-  };
 
-  const handleAddDiagnosis = (patientId) => {
-    const patient = patients.find(p => p.id === patientId);
-    if (patient) {
-      setSelectedPatient(null);
-      setDiagnosisPatient(patient);
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [pRes, aRes] = await Promise.all([
+          fetch(`${base.replace(/\/$/, "")}/patients`),
+          fetch(`${base.replace(/\/$/, "")}/appointments`)
+        ]);
+        if (!pRes.ok || !aRes.ok) throw new Error("Network response was not ok");
+        const [pJson, aJson] = await Promise.all([pRes.json(), aRes.json()]);
+        if (cancelled) return;
+        setPatients(Array.isArray(pJson) ? pJson : []);
+        setAppointments(Array.isArray(aJson) ? aJson : []);
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+        if (!cancelled) {
+          setError("Failed to load data from API.");
+          setPatients([]);
+          setAppointments([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-  };
+    load();
+    return () => { cancelled = true; };
+  }, [patientsProp, appointmentsProp, base]);
 
   return (
     <div className="hd-dashboard">
+      {/* Header */}
       <div className="hd-topbar">
         <h2 className="hd-app-title">Hospital Management System</h2>
         <div className="hd-user-info">
@@ -89,6 +85,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Page Title */}
       <h1 className="hd-title">Doctor Dashboard</h1>
       <p className="hd-subtitle">Welcome back, Doctor. Here's your daily overview.</p>
 
@@ -96,6 +93,7 @@ export default function Dashboard() {
       {error && <div className="hd-error">{error}</div>}
 
       <div className="hd-grid">
+        {/* Patients */}
         <div className="hd-card hd-card-large">
           <div className="hd-card-header">
             🏥 <strong>My Patients</strong>
@@ -114,7 +112,7 @@ export default function Dashboard() {
               {patients.map((p) => (
                 <tr key={p.id}>
                   <td>{p.name}</td>
-                  <td>{p.assigned_bed ? `Bed ${p.assigned_bed}` : "N/A"}</td>
+                  <td>{p.bed}</td>
                   <td>{p.condition}</td>
                   <td>
                     <button className="hd-btn-icon" onClick={() => setSelectedPatient(p)} title="View Patient Details">
@@ -126,13 +124,14 @@ export default function Dashboard() {
                   </td>
                 </tr>
               ))}
-              {patients.length === 0 && !loading && (
-                <tr><td colSpan="4">No patients assigned to you.</td></tr>
+              {patients.length === 0 && (
+                <tr><td colSpan="4">No patients found.</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
+        {/* Appointments */}
         <div className="hd-card hd-card-large">
           <div className="hd-card-header">
             📅 <strong>Today's Appointments</strong>
@@ -142,20 +141,21 @@ export default function Dashboard() {
             {appointments.map((a) => (
               <div key={a.id} className="hd-appointment">
                 <div>
-                  <div className="hd-apt-name">{a.patient_name}</div>
-                  <div className="hd-apt-id">Patient ID: {a.patient}</div>
+                  <div className="hd-apt-name">{a.patient}</div>
+                  <div className="hd-apt-id">Patient ID: {a.patientId}</div>
                 </div>
                 <div className="hd-apt-meta">
-                  <div className="hd-time">🕐 {a.appointment_time}</div>
+                  <div className="hd-time">🕐 {a.time}</div>
                   <div className="hd-status">{a.status}</div>
                 </div>
               </div>
             ))}
-            {appointments.length === 0 && !loading && <div>No appointments scheduled for today.</div>}
+            {appointments.length === 0 && <div>No appointments scheduled for today.</div>}
           </div>
         </div>
       </div>
 
+      {/* Stats */}
       <div className="hd-stats-row">
         <StatsCard title="Total Patients" value={patients.length} icon="👥" />
         <StatsCard title="Today's Appointments" value={appointments.length} icon="📅" />
@@ -167,8 +167,8 @@ export default function Dashboard() {
         <PatientModal
           patient={selectedPatient}
           onClose={() => setSelectedPatient(null)}
-          onAddMedication={handleAddMedication}
-          onAddDiagnosis={handleAddDiagnosis}
+          onAddMedication={(id) => { console.log("Add medication for", id); }}
+          onAddDiagnosis={(id) => { console.log("Add diagnosis for", id); }}
         />
       )}
 
@@ -177,14 +177,6 @@ export default function Dashboard() {
           patient={prescribePatient}
           onClose={() => setPrescribePatient(null)}
           onPrescribe={handlePrescribe}
-        />
-      )}
-
-      {diagnosisPatient && (
-        <DiagnosisModal
-          patient={diagnosisPatient}
-          onClose={() => setDiagnosisPatient(null)}
-          onSaveDiagnosis={handleSaveDiagnosis}
         />
       )}
     </div>
