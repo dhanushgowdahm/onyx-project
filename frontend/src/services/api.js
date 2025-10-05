@@ -181,6 +181,20 @@ export const doctorsAPI = {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
+  },
+
+  checkAvailability: async (doctorId, date) => {
+    const response = await fetch(`${API_BASE_URL}/doctor-availability/?doctor_id=${doctorId}&date=${date}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  getAvailability: async (doctorId) => {
+    const response = await fetch(`${API_BASE_URL}/doctor-availability/?doctor_id=${doctorId}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
   }
 };
 

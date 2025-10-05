@@ -17,6 +17,9 @@ const Appointment = () => {
     appointment_time: "",
     status: "scheduled",
   });
+  const [availabilityStatus, setAvailabilityStatus] = useState(null);
+  const [selectedDoctorInfo, setSelectedDoctorInfo] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -103,7 +106,42 @@ const Appointment = () => {
   const resetForm = () => {
     setEditingAppointment(null);
     setNewAppointment({ patient: "", doctor: "", appointment_date: "", appointment_time: "", status: "scheduled" });
+    setAvailabilityStatus(null);
+    setSelectedDoctorInfo(null);
   };
+
+  const checkDoctorAvailability = async (doctorId, date) => {
+    if (!doctorId || !date) {
+      setAvailabilityStatus(null);
+      return;
+    }
+
+    setCheckingAvailability(true);
+    try {
+      const availabilityData = await doctorsAPI.checkAvailability(doctorId, date);
+      setAvailabilityStatus(availabilityData);
+      
+      // Also get doctor info for display
+      const doctor = doctors.find(d => d.id === parseInt(doctorId));
+      setSelectedDoctorInfo(doctor);
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      setAvailabilityStatus({
+        is_available: false,
+        error: true,
+        message: `Error checking availability: ${error.message}`
+      });
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
+  // Check availability when doctor or date changes
+  useEffect(() => {
+    if (newAppointment.doctor && newAppointment.appointment_date) {
+      checkDoctorAvailability(newAppointment.doctor, newAppointment.appointment_date);
+    }
+  }, [newAppointment.doctor, newAppointment.appointment_date]);
 
   const handleCloseModal = () => {
     setShowForm(false);
@@ -112,7 +150,7 @@ const Appointment = () => {
   
   const getDoctorName = (doctorId) => {
       const doctor = doctors.find(d => d.id === doctorId);
-      return doctor ? doctor.name : 'Unknown';
+      return doctor ? (doctor.full_name || doctor.first_name + ' ' + doctor.last_name || 'Dr. ' + doctor.user) : 'Unknown';
   };
   
   const getPatientName = (patientId) => {
@@ -236,16 +274,47 @@ const Appointment = () => {
             >
               <option value="">Select doctor</option>
               {doctors.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
+                <option key={d.id} value={d.id}>
+                  {getDoctorName(d.id)} - {d.specialization}
+                  {d.available_days && d.available_days.length > 0 && 
+                    ` (Available: ${d.available_days.join(', ')})`
+                  }
+                </option>
               ))}
             </select>
+
+            {selectedDoctorInfo && selectedDoctorInfo.available_days && (
+              <div className="doctor-availability-info">
+                <strong>Dr. {getDoctorName(selectedDoctorInfo.id)} is available on:</strong><br/>
+                {selectedDoctorInfo.available_days.join(', ')}
+              </div>
+            )}
 
             <label>Appointment Date *</label>
             <input
               type="date"
               value={newAppointment.appointment_date}
               onChange={(e) => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
+              min={new Date().toISOString().split('T')[0]} // Prevent past dates
             />
+
+            {checkingAvailability && (
+              <div className="availability-checking">
+                Checking doctor availability...
+              </div>
+            )}
+
+            {availabilityStatus && (
+              <div className={`availability-status ${availabilityStatus.is_available ? 'available' : 'unavailable'}`}>
+                {availabilityStatus.error ? (
+                  <span className="error">❌ {availabilityStatus.message}</span>
+                ) : availabilityStatus.is_available ? (
+                  <span className="success">✅ {availabilityStatus.message}</span>
+                ) : (
+                  <span className="warning">⚠️ {availabilityStatus.message}</span>
+                )}
+              </div>
+            )}
 
             <label>Time *</label>
             <input
@@ -256,9 +325,18 @@ const Appointment = () => {
 
             <div className="modal-actions">
               <button onClick={handleCloseModal}>Cancel</button>
-              <button onClick={handleBook} className="btn-book">
+              <button 
+                onClick={handleBook} 
+                className="btn-book"
+                disabled={availabilityStatus && !availabilityStatus.is_available}
+              >
                 {editingAppointment ? 'Update Appointment' : 'Book Appointment'}
               </button>
+              {availabilityStatus && !availabilityStatus.is_available && (
+                <div className="booking-disabled-message">
+                  Cannot book appointment - doctor is not available on selected day
+                </div>
+              )}
             </div>
           </div>
         </div>
