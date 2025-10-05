@@ -1,0 +1,62 @@
+name: Deploy Django Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 98.70.36.9
+          username: azureuser
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            set -e  # Exit immediately if a command exits with a non-zero status
+            echo "Starting deployment..."
+
+            # Clone if not exists, else pull latest
+            if [ ! -d ~/onyx-project ]; then
+              echo "Cloning repo..."
+              git clone https://github.com/dhanushgowdahm/onyx-project.git ~/onyx-project
+            else
+              echo "Repo exists, pulling latest changes..."
+              cd ~/onyx-project
+              git reset --hard HEAD  # reset any local changes
+              git clean -fd         # clean untracked files
+              git pull origin main
+            fi
+
+            cd ~/onyx-project/backend
+
+            # Create virtual environment if it does not exist
+            if [ ! -d "venv" ]; then
+              echo "Creating virtual environment..."
+              python3 -m venv venv
+            fi
+
+            echo "Activating virtual environment..."
+            source venv/bin/activate
+
+            echo "Upgrading pip and installing requirements..."
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            echo "Applying database migrations..."
+            python manage.py migrate --noinput
+
+            echo "Collecting static files..."
+            python manage.py collectstatic --noinput
+
+            echo "Restarting Gunicorn service..."
+            sudo systemctl restart gunicorn
+
+            echo "Deployment complete!"

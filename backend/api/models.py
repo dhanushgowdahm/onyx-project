@@ -14,13 +14,19 @@ class CustomUser(AbstractUser):
         return self.username
 
 class Doctor(models.Model):
-    name = models.CharField(max_length=100)
+    # One-to-one link to the user model
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor_profile')
+    
+    # Name is no longer needed here; we'll get it from the user model
+    # name = models.CharField(max_length=100)
+    
     specialization = models.CharField(max_length=100)
     contact = models.CharField(max_length=15)
     availability = models.CharField(max_length=255, blank=True, help_text="Comma-separated days, e.g., Monday,Tuesday")
 
     def __str__(self):
-        return f"Dr. {self.name} ({self.specialization})"
+        # Get the full name from the linked user
+        return f"Dr. {self.user.get_full_name()} ({self.specialization})"
 
 class Bed(models.Model):
     WARD_CHOICES = (
