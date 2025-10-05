@@ -1,7 +1,40 @@
 // src/components/PatientModal.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { medicinesAPI, diagnosesAPI } from "../../services/api";
 
 export default function PatientModal({ patient, onClose, onAddMedication, onAddDiagnosis }) {
+  const [medicines, setMedicines] = useState([]);
+  const [diagnoses, setDiagnoses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      if (!patient) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch medicines and diagnoses for this patient
+        const [medicinesData, diagnosesData] = await Promise.all([
+          medicinesAPI.getByPatient(patient.id),
+          diagnosesAPI.getByPatient(patient.id)
+        ]);
+        
+        setMedicines(medicinesData || []);
+        setDiagnoses(diagnosesData || []);
+      } catch (err) {
+        console.error("Error fetching patient data:", err);
+        setError("Failed to load patient medicines and diagnoses");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatientData();
+  }, [patient]);
+
   if (!patient) return null;
 
   const handleMedication = () => {
@@ -16,32 +49,121 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
 
   return (
     <div className="hd-modal-overlay" role="dialog" aria-modal="true">
-      <div className="hd-modal">
+      <div className="hd-modal hd-patient-modal-unified">
         <button className="hd-modal-close" onClick={onClose} aria-label="Close">×</button>
-        <h2 className="hd-modal-title">Patient Details</h2>
-
-        <div className="hd-modal-grid">
-          <div><div className="hd-meta-label">Name</div><div className="hd-meta-value">{patient.name}</div></div>
-          <div><div className="hd-meta-label">Contact</div><div className="hd-meta-value">{patient.contact || "-"}</div></div>
-
-          <div><div className="hd-meta-label">Patient ID</div><div className="hd-meta-value">{patient.id}</div></div>
-          <div><div className="hd-meta-label">Emergency Contact</div><div className="hd-meta-value">{patient.emergency || "-"}</div></div>
-
-          <div><div className="hd-meta-label">Age</div><div className="hd-meta-value">{patient.age ? `${patient.age} years` : "-"}</div></div>
-          <div><div className="hd-meta-label">Assigned Bed</div><div className="hd-meta-value">{patient.bed || "-"}</div></div>
-
-          <div><div className="hd-meta-label">Gender</div><div className="hd-meta-value">{patient.gender || "-"}</div></div>
-          <div><div className="hd-meta-label">Address</div><div className="hd-meta-value">{patient.address || "-"}</div></div>
+        
+        <div className="hd-modal-header">
+          <h2 className="hd-modal-title">Patient Complete View</h2>
+          <p className="hd-modal-subtitle">Patient: <strong>{patient.name}</strong> (ID: {patient.id})</p>
         </div>
 
-        <div className="hd-modal-section">
-          <div className="hd-meta-label">Current Condition / Diagnosis</div>
-          <div className="hd-condition">{patient.condition || "-"}</div>
+        <div className="hd-unified-content">
+          {loading && <div className="hd-info">Loading patient data...</div>}
+          {error && <div className="hd-error">{error}</div>}
+
+          {!loading && (
+            <>
+              {/* Patient Basic Information */}
+              <div className="hd-unified-section">
+                <h3 className="hd-section-title">Patient Information</h3>
+                <div className="hd-patient-info-grid">
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Name:</span>
+                    <span className="hd-info-value">{patient.name}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Contact:</span>
+                    <span className="hd-info-value">{patient.contact || "-"}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Patient ID:</span>
+                    <span className="hd-info-value">{patient.id}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Emergency Contact:</span>
+                    <span className="hd-info-value">{patient.emergency || "-"}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Age:</span>
+                    <span className="hd-info-value">{patient.age ? `${patient.age} years` : "-"}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Assigned Bed:</span>
+                    <span className="hd-info-value">{patient.bed || "-"}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Gender:</span>
+                    <span className="hd-info-value">{patient.gender || "-"}</span>
+                  </div>
+                  <div className="hd-info-item">
+                    <span className="hd-info-label">Address:</span>
+                    <span className="hd-info-value">{patient.address || "-"}</span>
+                  </div>
+                  <div className="hd-info-item hd-info-full">
+                    <span className="hd-info-label">Current Condition:</span>
+                    <span className="hd-info-value">{patient.condition || "-"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Medicines Section */}
+              <div className="hd-unified-section">
+                <h3 className="hd-section-title">
+                  Prescribed Medicines
+                  <span className="hd-badge">{medicines.length}</span>
+                </h3>
+                {medicines.length > 0 ? (
+                  <div className="hd-medicines-unified">
+                    {medicines.map((medicine) => (
+                      <div key={medicine.id} className="hd-medicine-item">
+                        <div className="hd-medicine-header">
+                          <strong>{medicine.medicine_name}</strong>
+                          <span className="hd-medicine-dosage">{medicine.dosage}</span>
+                        </div>
+                        <div className="hd-medicine-details">
+                          <div>Frequency: {medicine.frequency}</div>
+                          <div>Relation to food: {medicine.relation_to_food}</div>
+                          <div>Days: {medicine.no_of_days}</div>
+                          <div className="hd-medicine-date">
+                            Prescribed: {new Date(medicine.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="hd-no-data">No medicines prescribed yet</div>
+                )}
+              </div>
+
+              {/* Diagnoses Section */}
+              <div className="hd-unified-section">
+                <h3 className="hd-section-title">
+                  Diagnosis History
+                  <span className="hd-badge">{diagnoses.length}</span>
+                </h3>
+                {diagnoses.length > 0 ? (
+                  <div className="hd-diagnoses-unified">
+                    {diagnoses.map((diagnosis) => (
+                      <div key={diagnosis.id} className="hd-diagnosis-item">
+                        <div className="hd-diagnosis-text">{diagnosis.diagnosis}</div>
+                        <div className="hd-diagnosis-date">
+                          Diagnosed: {new Date(diagnosis.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="hd-no-data">No diagnoses recorded yet</div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="hd-modal-actions">
-          <button className="hd-btn hd-btn-icon" onClick={handleMedication}>➕ Add Medication</button>
-          <button className="hd-btn hd-btn-icon" onClick={handleDiagnosis}>➕ Add Diagnosis</button>
+          <button className="hd-btn hd-btn-primary" onClick={handleMedication}>Add Medication</button>
+          <button className="hd-btn hd-btn-primary" onClick={handleDiagnosis}>Add Diagnosis</button>
           <div style={{flex:1}} />
           <button className="hd-btn hd-btn-secondary" onClick={onClose}>Close</button>
         </div>

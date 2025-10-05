@@ -247,8 +247,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,63 +267,58 @@
 
 .hd-modal {
   background: #ffffff;
-  border-radius: 20px;
+  border: 3px solid #000000;
+  border-radius: 8px;
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
 }
 
 /* Enhanced Medication Modal Styling */
 .hd-medication-modal-enhanced {
   background: #ffffff;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 650px;
-  max-height: 90vh;
+  border: 3px solid #000000;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
   position: relative;
   padding: 0;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
   animation: slideUp 0.4s ease;
-  border: 1px solid #eee;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .hd-modal-header {
-  padding: 24px 24px 16px 24px;
+  padding: 16px 24px 12px 24px;
   text-align: center;
-  background: #f8f8f8;
-  border-bottom: 1px solid #eee;
+  background: #ffffff;
+  border-bottom: 2px solid #000000;
   flex-shrink: 0;
 }
 
-.hd-prescription-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  display: inline-block;
-  padding: 16px;
-  background: #0a0826;
-  border-radius: 50%;
-  color: white;
-}
+/* Icon styles removed - no logos needed */
 
 .hd-modal-title {
   margin: 0 0 8px 0;
   font-size: 20px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .hd-modal-subtitle {
   margin: 0;
-  color: #555;
+  color: #000000;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .hd-patient-info-enhanced {
@@ -440,10 +434,10 @@
 }
 
 .hd-prescription-form {
-  padding: 24px 32px;
+  padding: 20px 24px;
   flex: 1;
   overflow-y: auto;
-  max-height: calc(90vh - 200px);
+  max-height: calc(85vh - 220px);
 }
 
 /* Custom scrollbar styling for prescription form */
@@ -465,11 +459,73 @@
   background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
 }
 
+/* Enhanced Frequency Checkbox Styling - Compact version */
+.hd-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f9f9f9;
+  margin-top: 8px;
+}
+
+.hd-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
+  min-height: 40px;
+  text-align: center;
+}
+
+.hd-checkbox-label:hover {
+  background: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.hd-checkbox-label.checked {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.hd-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #2196f3;
+}
+
+.hd-checkbox-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hd-frequency-hint {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
 .hd-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px 24px;
-  margin-bottom: 24px;
+  gap: 16px 20px;
+  margin-bottom: 20px;
 }
 
 .hd-form-group {
@@ -482,20 +538,15 @@
 }
 
 .hd-form-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   color: #374151;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 8px;
   font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
-.hd-label-icon {
-  font-size: 16px;
-}
+/* Label icon styles removed for cleaner UI */
 
 .hd-form-input, .hd-form-select {
   width: 100%;
@@ -546,11 +597,11 @@
 }
 
 .hd-prescription-summary {
-  margin: 0 32px 24px 32px;
-  padding: 20px;
+  margin: 0 24px 12px 24px;
+  padding: 12px;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 16px;
-  border: 2px solid #bae6fd;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
 }
 
 .hd-summary-title {
@@ -610,8 +661,8 @@
 
 .hd-modal-actions {
   display: flex;
-  gap: 16px;
-  padding: 24px 32px 32px 32px;
+  gap: 12px;
+  padding: 12px 24px 16px 24px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   justify-content: flex-end;
   flex-shrink: 0;
@@ -620,46 +671,50 @@
 
 .hd-btn {
   padding: 12px 24px;
-  border: none;
-  border-radius: 12px;
+  border: 2px solid #000000;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 700;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .hd-btn-primary {
-  background: #0a0826;
-  color: #fff;
-  border: none;
+  background: #000000;
+  color: #ffffff;
+  border: 2px solid #000000;
 }
 
 .hd-btn-primary:hover {
-  background: #232158;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
 }
 
 .hd-btn-primary:disabled {
-  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  background: #666666;
+  color: #cccccc;
+  border: 2px solid #666666;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
   opacity: 0.6;
 }
 
 .hd-btn-secondary {
-  background: #f8f8f8;
-  color: #333;
-  border: 1px solid #ddd;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
 }
 
 .hd-btn-secondary:hover {
-  background: #f3f3f3;
-  border-color: #bbb;
+  background: #000000;
+  color: #ffffff;
+  border: 2px solid #000000;
 }
 
 .hd-modal-grid {
@@ -733,12 +788,13 @@
 /* Diagnosis Modal Specific Styling */
 .hd-diagnosis-modal {
   background: #ffffff;
-  border-radius: 20px;
+  border: 3px solid #000000;
+  border-radius: 8px;
   width: 90%;
   max-width: 600px;
   position: relative;
   padding: 0;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
   animation: slideUp 0.3s ease;
   max-height: 90vh;
   overflow-y: auto;
@@ -774,48 +830,425 @@
 .hd-diagnosis-input,
 .hd-diagnosis-select {
   width: 100%;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border: 2px solid #000000;
+  border-radius: 4px;
   padding: 12px 16px;
   font-family: inherit;
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   background: #ffffff;
+  color: #000000;
   box-sizing: border-box;
 }
 
 .hd-diagnosis-input:focus,
 .hd-diagnosis-select:focus {
   outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-  transform: translateY(-1px);
+  border-color: #000000;
+  background: #f8f8f8;
 }
 
 .hd-diagnosis-textarea {
   width: 100%;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border: 2px solid #000000;
+  border-radius: 4px;
   padding: 16px;
   font-family: inherit;
   font-size: 14px;
   resize: vertical;
   min-height: 100px;
   background: #ffffff;
-  transition: all 0.3s ease;
+  color: #000000;
+  transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
 .hd-diagnosis-textarea:focus {
   outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  border-color: #000000;
+  background: #f8f8f8;
 }
 
 .hd-diagnosis-textarea::placeholder,
 .hd-diagnosis-input::placeholder {
-  color: #9ca3af;
+  color: #666666;
   font-style: italic;
+}
+
+/* Form Labels - Black and White Theme */
+.hd-form-label {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: #000000;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hd-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.hd-patient-label {
+  font-weight: 600;
+  color: #000000;
+}
+
+.hd-patient-name {
+  font-weight: 700;
+  color: #000000;
+}
+
+.hd-diagnosis-info {
+  background: #f8f8f8;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.hd-info-item {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* Prescription Summary - Black and White Theme */
+.hd-prescription-summary {
+  background: #f8f8f8;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 20px 0;
+}
+
+.hd-summary-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hd-summary-item {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #000000;
+}
+
+.hd-summary-label {
+  font-weight: 700;
+  color: #000000;
+}
+
+/* Frequency Checkboxes - Black and White Theme */
+.hd-frequency-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.hd-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hd-checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  background: #ffffff;
+}
+
+.hd-checkbox-item input[type="checkbox"]:checked {
+  background: #000000;
+  border-color: #000000;
+}
+
+.hd-checkbox-item label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+  cursor: pointer;
+}
+
+/* Modal Actions - Black and White Theme */
+.hd-modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 2px solid #000000;
+  background: #ffffff;
+  justify-content: flex-start;
+}
+
+/* Patient Modal - Medicines and Diagnoses Display */
+.hd-medicines-list,
+.hd-diagnoses-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 12px;
+}
+
+.hd-medicine-item {
+  border: 2px solid #000000;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #ffffff;
+}
+
+.hd-medicine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.hd-medicine-dosage {
+  background: #000000;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hd-medicine-details {
+  font-size: 13px;
+  color: #000000;
+  line-height: 1.4;
+}
+
+.hd-medicine-details > div {
+  margin-bottom: 4px;
+}
+
+.hd-medicine-date {
+  font-size: 11px;
+  color: #666666;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.hd-diagnosis-item {
+  border: 2px solid #000000;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #ffffff;
+}
+
+.hd-diagnosis-text {
+  font-size: 14px;
+  color: #000000;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.hd-diagnosis-date {
+  font-size: 11px;
+  color: #666666;
+  font-style: italic;
+}
+
+.hd-no-data {
+  color: #666666;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  border: 1px dashed #cccccc;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.hd-badge {
+  background: #000000;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Unified Patient Modal - Single Scrollable View */
+.hd-patient-modal-unified {
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hd-unified-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #ffffff;
+}
+
+.hd-unified-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.hd-unified-section:last-child {
+  border-bottom: none;
+  margin-bottom: 10px;
+}
+
+.hd-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 15px 0;
+  padding: 8px 0;
+  border-bottom: 2px solid #000000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+}
+
+.hd-patient-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.hd-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.hd-info-item.hd-info-full {
+  grid-column: 1 / -1;
+}
+
+.hd-info-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hd-info-value {
+  font-size: 14px;
+  color: #000000;
+  font-weight: 500;
+}
+
+.hd-medicines-unified,
+.hd-diagnoses-unified {
+  margin-top: 15px;
+}
+
+.hd-medicine-item,
+.hd-diagnosis-item {
+  border: 2px solid #000000;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hd-medicine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #000000;
+  font-size: 16px;
+}
+
+.hd-medicine-dosage {
+  background: #000000;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hd-medicine-details {
+  font-size: 14px;
+  color: #000000;
+  line-height: 1.5;
+}
+
+.hd-medicine-details > div {
+  margin-bottom: 6px;
+  padding: 2px 0;
+}
+
+.hd-medicine-date,
+.hd-diagnosis-date {
+  font-size: 12px;
+  color: #666666;
+  font-style: italic;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.hd-diagnosis-text {
+  font-size: 15px;
+  color: #000000;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.hd-no-data {
+  color: #666666;
+  font-style: italic;
+  text-align: center;
+  padding: 25px;
+  border: 2px dashed #cccccc;
+  border-radius: 6px;
+  margin-top: 15px;
+  background: #f9f9f9;
+}
+
+/* Scrollbar Styling for Unified Content */
+.hd-unified-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hd-unified-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.hd-unified-content::-webkit-scrollbar-thumb {
+  background: #000000;
+  border-radius: 4px;
+}
+
+.hd-unified-content::-webkit-scrollbar-thumb:hover {
+  background: #333333;
 }
 
 .hd-diagnosis-info {
@@ -890,14 +1323,54 @@
   }
 
   .hd-medication-modal-enhanced {
-    width: 98%;
+    width: 95%;
     margin: 10px;
     max-height: 90vh;
   }
 
   .hd-form-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
+  }
+
+  .hd-prescription-form {
+    padding: 16px 20px;
+    max-height: calc(90vh - 200px);
+  }
+
+  .hd-checkbox-group {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .hd-checkbox-label {
+    padding: 12px 16px;
+    min-height: 44px;
+    justify-content: flex-start;
+  }
+
+  .hd-checkbox-text {
+    font-size: 14px;
+  }
+
+  .hd-modal-header {
+    padding: 12px 20px 8px 20px;
+  }
+
+  .hd-prescription-summary {
+    margin: 0 20px 10px 20px;
+    padding: 10px;
+  }
+
+  .hd-modal-actions {
+    padding: 12px 20px;
+    flex-direction: column;
+  }
+
+  .hd-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .hd-modal-header {

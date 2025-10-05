@@ -55,14 +55,26 @@ export default function Dashboard() {
 
   const handlePrescribe = async (patientId, medicineData) => {
     console.log(`Medicine prescribed for patient ${patientId}:`, medicineData);
-    // Optionally refresh patient data or show updated medicines list
-    // Could fetch updated patient data here if needed
+    // Close the prescription modal and reopen patient view to show updated data
+    setPrescribePatient(null);
+    // If patient modal was open, keep it open to show updated data
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Small delay to ensure API update is complete
+      setTimeout(() => setSelectedPatient(patient), 100);
+    }
   };
 
   const handleSaveDiagnosis = async (patientId, diagnosisData) => {
     console.log(`Diagnosis saved for patient ${patientId}:`, diagnosisData);
-    // Optionally refresh patient data or show updated diagnoses list
-    // Could fetch updated patient data here if needed
+    // Close the diagnosis modal and reopen patient view to show updated data
+    setDiagnosisPatient(null);
+    // If patient modal was open, keep it open to show updated data
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // Small delay to ensure API update is complete
+      setTimeout(() => setSelectedPatient(patient), 100);
+    }
   };
 
   const handleAddMedication = (patientId) => {

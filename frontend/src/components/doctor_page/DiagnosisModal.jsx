@@ -46,7 +46,7 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
         </button>
         
         <div className="hd-modal-header">
-          <h3 className="hd-modal-title">🩺 Add Diagnosis</h3>
+          <h3 className="hd-modal-title">Add Diagnosis</h3>
           <div className="hd-patient-info">
             <span className="hd-patient-label">Patient:</span>
             <span className="hd-patient-name">{patient.name}</span>
@@ -56,7 +56,6 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
         <form onSubmit={handleSubmit} className="hd-diagnosis-form">
           <div className="hd-form-group">
             <label className="hd-form-label">
-              <span className="hd-label-icon">🔍</span>
               Diagnosis Details *
             </label>
             <textarea
@@ -71,11 +70,9 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
 
           <div className="hd-diagnosis-info">
             <div className="hd-info-item">
-              <span className="hd-info-icon">👨‍⚕️</span>
               <span>Diagnosed by: Doctor</span>
             </div>
             <div className="hd-info-item">
-              <span className="hd-info-icon">📅</span>
               <span>Date: {new Date().toLocaleDateString()}</span>
             </div>
           </div>
@@ -85,7 +82,6 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
               Cancel
             </button>
             <button type="submit" className="hd-btn hd-btn-primary" disabled={isSubmitting || !diagnosis.trim()}>
-              <span className="hd-btn-icon">💾</span>
               {isSubmitting ? 'Saving...' : 'Save Diagnosis'}
             </button>
           </div>
