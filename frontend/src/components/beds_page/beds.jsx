@@ -1,66 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import './beds.css';
+import { bedsAPI, patientsAPI, doctorsAPI } from '../../services/api';
 
-const initialBedsData = [
-  {
-    name: 'Ward A',
-    beds: [
-      { id: 101, occupied: true },
-      { id: 102, occupied: false },
-      { id: 103, occupied: false },
-      { id: 104, occupied: false },
-    ],
-  },
-  {
-    name: 'Ward B',
-    beds: [
-      { id: 201, occupied: true },
-      { id: 202, occupied: false },
-      { id: 203, occupied: false },
-      { id: 204, occupied: false },
-    ],
-  },
-  {
-    name: 'Ward C',
-    beds: [
-      { id: 301, occupied: false },
-      { id: 302, occupied: false },
-      { id: 303, occupied: false },
-      { id: 304, occupied: false },
-    ],
-  },
-];
+const initialBedsData = [];
 
 // Bed Details Modal Component (for occupied beds)
 function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
   const [patientDetails, setPatientDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch patient details when modal opens
   useEffect(() => {
+    const fetchPatientDetails = async () => {
+      if (selectedBed && selectedBed.bedData) {
+        try {
+          setLoading(true);
+          setError(null);
+          
+          // Get all patients and find the one assigned to this bed
+          const patients = await patientsAPI.getAll();
+          const assignedPatient = patients.find(patient => 
+            patient.assigned_bed && 
+            patient.assigned_bed.toString() === selectedBed.bedData.id.toString()
+          );
+          
+          if (assignedPatient) {
+            setPatientDetails(assignedPatient);
+          } else {
+            setError("No patient found for this bed");
+          }
+        } catch (err) {
+          console.error('Error fetching patient details:', err);
+          setError("Failed to load patient details");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchPatientDetails();
-  }, []);
+  }, [selectedBed]);
 
-  const fetchPatientDetails = async () => {
-    setLoading(true);
-    try {
-      // In a real app, you'd fetch patient details based on bed assignment
-      // For now, we'll use sample data that matches the image
-      const samplePatient = {
-        name: "John Smith",
-        id: "P001",
-        age: 45,
-        gender: "Male",
-        contact: "+1234567890",
-        condition: "Hypertension"
-      };
-      setPatientDetails(samplePatient);
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
-    }
-    setLoading(false);
-  };
-
-  const handleDischarge = () => {
+  const handleDischarge = async () => {
     if (window.confirm("Are you sure you want to discharge this patient?")) {
       onDischarge();
     }
@@ -84,6 +66,10 @@ function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
           <div className="loading-section">
             <div className="loading-text">Loading patient details...</div>
           </div>
+        ) : error ? (
+          <div className="error-section">
+            <div className="error-text">{error}</div>
+          </div>
         ) : patientDetails ? (
           <div className="patient-details-section">
             <h4 className="section-title">Current Patient</h4>
@@ -94,11 +80,11 @@ function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
               </div>
               <div className="info-row">
                 <span className="info-label">ID:</span>
-                <span className="info-value">{patientDetails.id}</span>
+                <span className="info-value">#{patientDetails.id}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Age:</span>
-                <span className="info-value">{patientDetails.age}</span>
+                <span className="info-value">{patientDetails.age} years</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Gender:</span>
@@ -109,14 +95,28 @@ function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
                 <span className="info-value">{patientDetails.contact}</span>
               </div>
               <div className="info-row">
-                <span className="info-label">Condition:</span>
-                <span className="info-value">{patientDetails.condition}</span>
+                <span className="info-label">Address:</span>
+                <span className="info-value">{patientDetails.address || 'Not provided'}</span>
               </div>
+              <div className="info-row">
+                <span className="info-label">Emergency Contact:</span>
+                <span className="info-value">{patientDetails.emergency_contact || 'Not provided'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Condition:</span>
+                <span className="info-value">{patientDetails.condition || 'Not specified'}</span>
+              </div>
+              {patientDetails.assigned_doctor && (
+                <div className="info-row">
+                  <span className="info-label">Assigned Doctor:</span>
+                  <span className="info-value">Dr. {patientDetails.assigned_doctor}</span>
+                </div>
+              )}
             </div>
           </div>
         ) : (
-          <div className="loading-section">
-            <div className="loading-text">No patient details available</div>
+          <div className="error-section">
+            <div className="error-text">No patient assigned to this bed</div>
           </div>
         )}
 
@@ -125,7 +125,6 @@ function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
           <button 
             className="discharge-btn" 
             onClick={handleDischarge}
-            disabled={loading}
           >
             Discharge Patient
           </button>
@@ -138,51 +137,41 @@ function BedDetailsModal({ selectedBed, wardName, onClose, onDischarge }) {
 // Allocate Bed Modal Component (for available beds)
 function AllocateBedModal({ selectedBed, wardName, onClose, onAllocate }) {
   const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState("");
   const [loading, setLoading] = useState(true);
-
+  
+  // Fetch patients without assigned beds and all doctors when modal opens
   useEffect(() => {
-    fetchPatients();
-  }, []);
-
-  const fetchPatients = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/patients");
-      if (response.ok) {
-        const data = await response.json();
-        // Filter patients who don't have beds assigned
-        const availablePatients = data.filter(patient => 
-          !patient.assigned_bed || patient.assigned_bed === "Not assigned"
-        );
-        setPatients(availablePatients);
-      } else {
-        console.error("Failed to fetch patients");
-        // Fallback sample data
-        setPatients([
-          { id: "P002", name: "Sarah Johnson", assigned_bed: "Not assigned" },
-          { id: "P003", name: "Michael Brown", assigned_bed: "Not assigned" },
-          { id: "P004", name: "Emily Davis", assigned_bed: "Not assigned" }
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [allPatients, allDoctors] = await Promise.all([
+          patientsAPI.getAll(),
+          doctorsAPI.getAll()
         ]);
+        
+        // Filter patients who don't have an assigned bed
+        const availablePatients = allPatients.filter(patient => !patient.assigned_bed);
+        setPatients(availablePatients);
+        setDoctors(allDoctors);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-      // Fallback sample data
-      setPatients([
-        { id: "P002", name: "Sarah Johnson", assigned_bed: "Not assigned" },
-        { id: "P003", name: "Michael Brown", assigned_bed: "Not assigned" },
-        { id: "P004", name: "Emily Davis", assigned_bed: "Not assigned" }
-      ]);
-    }
-    setLoading(false);
-  };
+    };
+    
+    fetchData();
+  }, []);
 
   const handleAllocate = () => {
     if (!selectedPatient) {
       alert("Please select a patient to allocate");
       return;
     }
-    onAllocate(selectedPatient);
+    onAllocate(selectedPatient, selectedDoctor);
   };
 
   if (!selectedBed) return null;
@@ -202,32 +191,70 @@ function AllocateBedModal({ selectedBed, wardName, onClose, onAllocate }) {
         <div className="patient-selection">
           <label htmlFor="patient-select">Select Patient</label>
           {loading ? (
-            <div className="loading-text">Loading patients...</div>
+            <div className="loading-text">Loading available patients...</div>
           ) : (
             <select
               id="patient-select"
               value={selectedPatient}
-              onChange={(e) => setSelectedPatient(e.target.value)}
+              onChange={(e) => {
+                setSelectedPatient(e.target.value);
+                setSelectedDoctor(""); // Reset doctor selection when patient changes
+              }}
               className="patient-dropdown"
             >
-              <option value="">Choose a patient to allocate</option>
+              <option value="">
+                {patients.length > 0 ? "Choose a patient to allocate" : "No patients available for allocation"}
+              </option>
               {patients.map(patient => (
                 <option key={patient.id} value={patient.id}>
-                  {patient.name} (ID: {patient.id})
+                  {patient.name} (ID: #{patient.id}) - {patient.age} years, {patient.gender}
                 </option>
               ))}
             </select>
           )}
         </div>
 
+        {/* Conditional Doctor Assignment - only show if selected patient has no doctor */}
+        {selectedPatient && !loading && (() => {
+          const patient = patients.find(p => p.id.toString() === selectedPatient.toString());
+          return patient && !patient.assigned_doctor ? (
+            <div className="doctor-selection">
+              <label htmlFor="doctor-select">Assign Doctor (Optional)</label>
+              <select
+                id="doctor-select"
+                value={selectedDoctor}
+                onChange={(e) => setSelectedDoctor(e.target.value)}
+                className="doctor-dropdown"
+              >
+                <option value="">No doctor assigned</option>
+                {doctors.map(doctor => (
+                  <option key={doctor.id} value={doctor.id}>
+                    Dr. {doctor.name} - {doctor.specialization}
+                  </option>
+                ))}
+              </select>
+              <div className="doctor-note">
+                💡 This patient doesn't have a doctor assigned yet
+              </div>
+            </div>
+          ) : patient && patient.assigned_doctor ? (
+            <div className="doctor-info">
+              <label>Patient's Current Doctor:</label>
+              <div className="current-doctor">
+                ✅ Already assigned to a doctor
+              </div>
+            </div>
+          ) : null;
+        })()}
+
         <div className="modal-actions">
           <button className="cancel-btn" onClick={onClose}>Cancel</button>
           <button 
             className="allocate-btn" 
             onClick={handleAllocate}
-            disabled={!selectedPatient || loading}
+            disabled={!selectedPatient}
           >
-            Allocate Bed
+            Allocate Bed{selectedDoctor && " & Assign Doctor"}
           </button>
         </div>
       </div>
@@ -274,16 +301,56 @@ function WardSection({ ward, onBedClick }) {
 }
 
 export default function BedsDashboard() {
-  const [wards, setWards] = useState(initialBedsData);
+  const [wards, setWards] = useState([]);
+  const [allBeds, setAllBeds] = useState([]);
   const [showAllocateModal, setShowAllocateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedBedInfo, setSelectedBedInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchBeds();
+  }, []);
+
+  const fetchBeds = async () => {
+    try {
+      setLoading(true);
+      const bedsData = await bedsAPI.getAll();
+      
+      // Group beds by ward
+      const wardGroups = bedsData.reduce((acc, bed) => {
+        const ward = bed.ward || 'Ward A'; // Default ward if not specified
+        if (!acc[ward]) {
+          acc[ward] = {
+            name: ward,
+            beds: []
+          };
+        }
+        acc[ward].beds.push({
+          id: bed.bed_number,
+          occupied: bed.is_occupied,
+          patient_name: bed.patient_name || null,
+          bedData: bed // Store original bed data
+        });
+        return acc;
+      }, {});
+
+      setWards(Object.values(wardGroups));
+      setAllBeds(bedsData);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching beds:", err);
+      setError("Failed to load bed data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Calculate stats
-  const allBeds = wards.flatMap(ward => ward.beds);
   const totalBeds = allBeds.length;
-  const occupiedBeds = allBeds.filter(b => b.occupied).length;
-  const occupancyRate = Math.round((occupiedBeds / totalBeds) * 100);
+  const occupiedBeds = allBeds.filter(b => b.is_occupied).length;
+  const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
 
   // Handle bed click to show appropriate modal
   function handleBedClick(bed, wardName) {
@@ -298,60 +365,99 @@ export default function BedsDashboard() {
     }
   }
 
-  // Handle bed allocation
-  function handleAllocateBed(patientId) {
+  // Handle bed allocation with optional doctor assignment
+  async function handleAllocateBed(patientId, doctorId = null) {
     if (!selectedBedInfo) return;
     
     const { bed, wardName } = selectedBedInfo;
     
-    // Update bed status to occupied
-    setWards(prev =>
-      prev.map(ward =>
-        ward.name === wardName
-          ? {
-              ...ward,
-              beds: ward.beds.map(b =>
-                b.id === bed.id ? { ...b, occupied: true, patientId } : b
-              ),
-            }
-          : ward
-      )
-    );
-
-    // Close modal
-    setShowAllocateModal(false);
-    setSelectedBedInfo(null);
-    
-    // Show success message
-    alert(`Bed ${bed.id} in ${wardName} has been allocated successfully!`);
+    try {
+      // Get patient details
+      const patient = await patientsAPI.getById(patientId);
+      
+      // Update patient to assign the bed and optionally assign doctor
+      const updatedData = {
+        ...patient,
+        assigned_bed: bed.bedData.id
+      };
+      
+      // Only update doctor if one is selected and patient doesn't already have one
+      if (doctorId && !patient.assigned_doctor) {
+        updatedData.assigned_doctor = doctorId;
+      }
+      
+      await patientsAPI.update(patientId, updatedData);
+      
+      // Update bed status to occupied in the database
+      await bedsAPI.update(bed.bedData.id, {
+        ...bed.bedData,
+        is_occupied: true
+      });
+      
+      // Refresh bed data from the database
+      await fetchBeds();
+      
+      // Close modal
+      setShowAllocateModal(false);
+      setSelectedBedInfo(null);
+      
+      // Create success message
+      let message = `Bed ${bed.id} in ${wardName} has been allocated to ${patient.name}`;
+      if (doctorId && !patient.assigned_doctor) {
+        message += ' and doctor has been assigned';
+      }
+      message += ' successfully!';
+      
+      alert(message);
+      
+    } catch (error) {
+      console.error('Error allocating bed:', error);
+      alert(`Failed to allocate bed: ${error.message}`);
+    }
   }
 
   // Handle patient discharge
-  function handleDischargePatient() {
+  async function handleDischargePatient() {
     if (!selectedBedInfo) return;
     
     const { bed, wardName } = selectedBedInfo;
     
-    // Update bed status to available
-    setWards(prev =>
-      prev.map(ward =>
-        ward.name === wardName
-          ? {
-              ...ward,
-              beds: ward.beds.map(b =>
-                b.id === bed.id ? { ...b, occupied: false, patientId: null } : b
-              ),
-            }
-          : ward
-      )
-    );
-
-    // Close modal
-    setShowDetailsModal(false);
-    setSelectedBedInfo(null);
-    
-    // Show success message
-    alert(`Patient discharged from Bed ${bed.id} in ${wardName} successfully!`);
+    try {
+      // First, get all patients to find the one assigned to this bed
+      const patients = await patientsAPI.getAll();
+      const assignedPatient = patients.find(patient => 
+        patient.assigned_bed && 
+        patient.assigned_bed.toString() === bed.bedData.id.toString()
+      );
+      
+      if (assignedPatient) {
+        // Update patient to remove bed assignment
+        await patientsAPI.update(assignedPatient.id, {
+          ...assignedPatient,
+          assigned_bed: null
+        });
+      }
+      
+      // Update bed status to available in the database
+      await bedsAPI.update(bed.bedData.id, {
+        ...bed.bedData,
+        is_occupied: false
+      });
+      
+      // Refresh bed data from the database
+      await fetchBeds();
+      
+      // Close modal
+      setShowDetailsModal(false);
+      setSelectedBedInfo(null);
+      
+      // Show success message
+      alert(`Patient discharged from Bed ${bed.id} in ${wardName} successfully!`);
+      
+    } catch (error) {
+      console.error('Error discharging patient:', error);
+      alert(`Failed to discharge patient: ${error.message}`);
+    }
   }
 
   // Close modals
@@ -359,6 +465,24 @@ export default function BedsDashboard() {
     setShowAllocateModal(false);
     setShowDetailsModal(false);
     setSelectedBedInfo(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="dashboard-wrap">
+        <h2 className="dashboard-title">Bed Allocation</h2>
+        <div className="loading">Loading bed information...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-wrap">
+        <h2 className="dashboard-title">Bed Allocation</h2>
+        <div className="error">Error: {error}</div>
+      </div>
+    );
   }
 
   return (
@@ -383,9 +507,13 @@ export default function BedsDashboard() {
       </div>
 
       <div className="wards-wrap">
-        {wards.map(ward => (
-          <WardSection key={ward.name} ward={ward} onBedClick={handleBedClick} />
-        ))}
+        {wards.length > 0 ? (
+          wards.map(ward => (
+            <WardSection key={ward.name} ward={ward} onBedClick={handleBedClick} />
+          ))
+        ) : (
+          <div className="no-data">No bed data available</div>
+        )}
       </div>
 
       <div className="legend-wrap">

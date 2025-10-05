@@ -1,165 +1,134 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Appointment.css";
+import { appointmentsAPI, patientsAPI, doctorsAPI } from "../../services/api";
 
 const Appointment = () => {
-  const [appointments, setAppointments] = useState([
-    {
-      id: "A001",
-      patient: "John Smith",
-      patientId: "P001",
-      doctor: "Dr. Emily Wilson",
-      specialty: "Cardiology",
-      date: "Dec 15, 2024",
-      time: "10:00",
-      status: "completed",
-    },
-    {
-      id: "A002",
-      patient: "Sarah Johnson",
-      patientId: "P002",
-      doctor: "Dr. Robert Davis",
-      specialty: "Endocrinology",
-      date: "Dec 15, 2024",
-      time: "14:30",
-      status: "scheduled",
-    },
-    {
-      id: "A003",
-      patient: "Michael Brown",
-      patientId: "P003",
-      doctor: "Dr. Emily Wilson",
-      specialty: "Cardiology",
-      date: "Dec 16, 2024",
-      time: "09:00",
-      status: "scheduled",
-    },
-  ]);
-
+  const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [newAppointment, setNewAppointment] = useState({
     patient: "",
     doctor: "",
-    specialty: "",
-    date: "",
-    time: "",
+    appointment_date: "",
+    appointment_time: "",
     status: "scheduled",
   });
 
-  const patients = [
-    { id: "P001", name: "John Smith" },
-    { id: "P002", name: "Sarah Johnson" },
-    { id: "P003", name: "Michael Brown" },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const doctors = [
-    { name: "Dr. Emily Wilson", specialty: "Cardiology" },
-    { name: "Dr. Robert Davis", specialty: "Endocrinology" },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [appointmentsData, patientsData, doctorsData] = await Promise.all([
+        appointmentsAPI.getAll(),
+        patientsAPI.getAll(),
+        doctorsAPI.getAll()
+      ]);
 
-  const handleStatusChange = (id, newStatus) => {
-    setAppointments((prev) =>
-      prev.map((app) =>
-        app.id === id ? { ...app, status: newStatus } : app
-      )
-    );
+      setAppointments(appointmentsData || []);
+      setPatients(patientsData || []);
+      setDoctors(doctorsData || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(`Failed to load data: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    setAppointments((prev) => prev.filter((app) => app.id !== id));
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+        const appointmentToUpdate = appointments.find(app => app.id === id);
+        if (appointmentToUpdate) {
+            await appointmentsAPI.update(id, { ...appointmentToUpdate, status: newStatus });
+            fetchData(); // Refresh data
+        }
+    } catch (error) {
+        console.error("Failed to update status", error);
+        alert("Failed to update status.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this appointment?")) {
+        try {
+            await appointmentsAPI.delete(id);
+            fetchData(); // Refresh data
+        } catch (error) {
+            console.error("Failed to delete appointment", error);
+            alert("Failed to delete appointment.");
+        }
+    }
   };
 
   const handleEdit = (appointment) => {
     setEditingAppointment(appointment);
-    
-    // Convert date string back to YYYY-MM-DD format for the input
-    const dateObj = new Date(appointment.date);
-    const formattedDateForInput = dateObj.toISOString().split('T')[0];
-    
     setNewAppointment({
       patient: appointment.patient,
       doctor: appointment.doctor,
-      specialty: appointment.specialty,
-      date: formattedDateForInput,
-      time: appointment.time,
+      appointment_date: appointment.appointment_date,
+      appointment_time: appointment.appointment_time,
       status: appointment.status,
     });
     setShowForm(true);
   };
 
-  const handleBook = () => {
-    const patient = patients.find((p) => p.name === newAppointment.patient);
-    const doctor = doctors.find((d) => d.name === newAppointment.doctor);
+  const handleBook = async () => {
+    const appointmentData = {
+        ...newAppointment,
+    };
 
-    const formattedDate = new Date(newAppointment.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    if (editingAppointment) {
-      // Update existing appointment
-      setAppointments((prev) =>
-        prev.map((app) =>
-          app.id === editingAppointment.id
-            ? {
-                ...app,
-                patient: patient?.name,
-                patientId: patient?.id,
-                doctor: doctor?.name,
-                specialty: doctor?.specialty,
-                date: formattedDate,
-                time: newAppointment.time,
-                status: newAppointment.status,
-              }
-            : app
-        )
-      );
-      setEditingAppointment(null);
-    } else {
-      // Create new appointment
-      const id = "A" + String(appointments.length + 1).padStart(3, "0");
-      setAppointments([
-        ...appointments,
-        {
-          id,
-          patient: patient?.name,
-          patientId: patient?.id,
-          doctor: doctor?.name,
-          specialty: doctor?.specialty,
-          date: formattedDate,
-          time: newAppointment.time,
-          status: "scheduled",
-        },
-      ]);
+    try {
+        if (editingAppointment) {
+            await appointmentsAPI.update(editingAppointment.id, appointmentData);
+        } else {
+            await appointmentsAPI.create(appointmentData);
+        }
+        setShowForm(false);
+        resetForm();
+        fetchData(); // Refresh data
+    } catch (error) {
+        console.error("Failed to save appointment", error);
+        alert(`Failed to save appointment: ${error.message}`);
     }
-
-    setShowForm(false);
-    setNewAppointment({ patient: "", doctor: "", specialty: "", date: "", time: "", status: "scheduled" });
+  };
+  
+  const resetForm = () => {
+    setEditingAppointment(null);
+    setNewAppointment({ patient: "", doctor: "", appointment_date: "", appointment_time: "", status: "scheduled" });
   };
 
   const handleCloseModal = () => {
     setShowForm(false);
-    setEditingAppointment(null);
-    setNewAppointment({ patient: "", doctor: "", specialty: "", date: "", time: "", status: "scheduled" });
+    resetForm();
   };
+  
+  const getDoctorName = (doctorId) => {
+      const doctor = doctors.find(d => d.id === doctorId);
+      return doctor ? doctor.name : 'Unknown';
+  };
+  
+  const getPatientName = (patientId) => {
+      const patient = patients.find(p => p.id === patientId);
+      return patient ? patient.name : 'Unknown';
+  }
 
-  // Calculate dynamic stats
   const calculateStats = () => {
-    const today = new Date();
-    const todayStr = today.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
+    const todayStr = new Date().toISOString().split('T')[0];
+    
     const todaysAppointments = appointments.filter(
-      (app) => app.date === todayStr && app.status !== "cancelled"
+      (app) => app.appointment_date === todayStr && app.status !== "cancelled"
     ).length;
 
     const upcomingAppointments = appointments.filter((app) => {
-      const appDate = new Date(app.date);
-      return appDate > today && app.status === "scheduled";
+      return app.appointment_date > todayStr && app.status === "scheduled";
     }).length;
 
     return {
@@ -179,21 +148,19 @@ const Appointment = () => {
           <h2>Appointment Management</h2>
           <p>Book and manage patient appointments</p>
         </div>
-        <button onClick={() => {
-          setEditingAppointment(null);
-          setNewAppointment({ patient: "", doctor: "", specialty: "", date: "", time: "", status: "scheduled" });
-          setShowForm(true);
-        }} className="btn-book">
+        <button onClick={() => setShowForm(true)} className="btn-book">
           + Book Appointment
         </button>
       </div>
 
       <div className="stats">
-        <div>Today's <br /> {stats.today}</div>
-        <div>Upcoming <br /> {stats.upcoming}</div>
-        <div>Patients <br /> {stats.patients}</div>
-        <div>Doctors <br /> {stats.doctors}</div>
+        <div>Today's <br /> {loading ? "..." : stats.today}</div>
+        <div>Upcoming <br /> {loading ? "..." : stats.upcoming}</div>
+        <div>Patients <br /> {loading ? "..." : stats.patients}</div>
+        <div>Doctors <br /> {loading ? "..." : stats.doctors}</div>
       </div>
+
+      {error && <div className="error-message">{error}</div>}
 
       <div className="appointments">
         <h3>All Appointments</h3>
@@ -215,21 +182,19 @@ const Appointment = () => {
                 <tr key={a.id}>
                   <td>{a.id}</td>
                   <td>
-                    {a.patient}
-                    <div className="subtext">{a.patientId}</div>
+                    {getPatientName(a.patient)}
+                    <div className="subtext">ID: {a.patient}</div>
                   </td>
                   <td>
-                    {a.doctor}
-                    <div className="subtext">{a.specialty}</div>
+                    {getDoctorName(a.doctor)}
+                    <div className="subtext">{doctors.find(d => d.id === a.doctor)?.specialization}</div>
                   </td>
-                  <td>{a.date}</td>
-                  <td>{a.time}</td>
+                  <td>{new Date(a.appointment_date).toLocaleDateString()}</td>
+                  <td>{a.appointment_time}</td>
                   <td>
                     <select
                       value={a.status}
-                      onChange={(e) =>
-                        handleStatusChange(a.id, e.target.value)
-                      }
+                      onChange={(e) => handleStatusChange(a.id, e.target.value)}
                       className={`status ${a.status}`}
                     >
                       <option value="scheduled">Scheduled</option>
@@ -238,18 +203,8 @@ const Appointment = () => {
                     </select>
                   </td>
                   <td>
-                    <button 
-                      className="edit-btn"
-                      onClick={() => handleEdit(a)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDelete(a.id)}
-                    >
-                      Delete
-                    </button>
+                    <button className="edit-btn" onClick={() => handleEdit(a)}>Edit</button>
+                    <button className="delete-btn" onClick={() => handleDelete(a.id)}>Delete</button>
                   </td>
                 </tr>
               ))}
@@ -266,49 +221,37 @@ const Appointment = () => {
             <label>Patient *</label>
             <select
               value={newAppointment.patient}
-              onChange={(e) =>
-                setNewAppointment({ ...newAppointment, patient: e.target.value })
-              }
+              onChange={(e) => setNewAppointment({ ...newAppointment, patient: e.target.value })}
             >
               <option value="">Select patient</option>
               {patients.map((p) => (
-                <option key={p.id} value={p.name}>
-                  {p.name}
-                </option>
+                <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
 
             <label>Doctor *</label>
             <select
               value={newAppointment.doctor}
-              onChange={(e) =>
-                setNewAppointment({ ...newAppointment, doctor: e.target.value })
-              }
+              onChange={(e) => setNewAppointment({ ...newAppointment, doctor: e.target.value })}
             >
               <option value="">Select doctor</option>
-              {doctors.map((d, i) => (
-                <option key={i} value={d.name}>
-                  {d.name}
-                </option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
 
             <label>Appointment Date *</label>
             <input
               type="date"
-              value={newAppointment.date}
-              onChange={(e) =>
-                setNewAppointment({ ...newAppointment, date: e.target.value })
-              }
+              value={newAppointment.appointment_date}
+              onChange={(e) => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
             />
 
             <label>Time *</label>
             <input
               type="time"
-              value={newAppointment.time}
-              onChange={(e) =>
-                setNewAppointment({ ...newAppointment, time: e.target.value })
-              }
+              value={newAppointment.appointment_time}
+              onChange={(e) => setNewAppointment({ ...newAppointment, appointment_time: e.target.value })}
             />
 
             <div className="modal-actions">

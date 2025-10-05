@@ -15,7 +15,7 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
         severity,
         notes: notes.trim(),
         date: new Date().toISOString().split('T')[0],
-        doctor: "Dr. Emily Wilson"
+        doctor: "Doctor"
       };
       onSaveDiagnosis(patient.id, diagnosisData);
       onClose();
@@ -89,7 +89,7 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
           <div className="hd-diagnosis-info">
             <div className="hd-info-item">
               <span className="hd-info-icon">👨‍⚕️</span>
-              <span>Diagnosed by: Dr. Emily Wilson</span>
+              <span>Diagnosed by: Doctor</span>
             </div>
             <div className="hd-info-item">
               <span className="hd-info-icon">📅</span>

@@ -23,15 +23,6 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
   const base = apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
   const navigate = useNavigate();
 
-  // sample fallback data
-  const samplePatients = [
-    { id: "P001", name: "John Smith", bed: "A-101", condition: "Hypertension" },
-    { id: "P002", name: "Michael Brown", bed: "Not assigned", condition: "Routine Checkup" }
-  ];
-  const sampleAppointments = [
-    { id: "A001", patientId: "P001", patient: "John Smith", time: "10:00", status: "scheduled" }
-  ];
-
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
@@ -48,8 +39,8 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
     if (patientsProp && appointmentsProp) return;
 
     if (!base) {
-      setPatients(samplePatients);
-      setAppointments(sampleAppointments);
+      setPatients([]);
+      setAppointments([]);
       setLoading(false);
       return;
     }
@@ -66,14 +57,14 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
         if (!pRes.ok || !aRes.ok) throw new Error("Network response was not ok");
         const [pJson, aJson] = await Promise.all([pRes.json(), aRes.json()]);
         if (cancelled) return;
-        setPatients(Array.isArray(pJson) ? pJson : samplePatients);
-        setAppointments(Array.isArray(aJson) ? aJson : sampleAppointments);
+        setPatients(Array.isArray(pJson) ? pJson : []);
+        setAppointments(Array.isArray(aJson) ? aJson : []);
       } catch (err) {
         console.error("Dashboard load error:", err);
         if (!cancelled) {
-          setError("Failed to load data from API — showing sample data.");
-          setPatients(samplePatients);
-          setAppointments(sampleAppointments);
+          setError("Failed to load data from API.");
+          setPatients([]);
+          setAppointments([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -89,14 +80,14 @@ export default function Dashboard({ patients: patientsProp, appointments: appoin
       <div className="hd-topbar">
         <h2 className="hd-app-title">Hospital Management System</h2>
         <div className="hd-user-info">
-          Welcome, Dr. Emily Wilson
+          Welcome, Doctor
           <button className="hd-logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </div>
 
       {/* Page Title */}
       <h1 className="hd-title">Doctor Dashboard</h1>
-      <p className="hd-subtitle">Welcome back, Dr. Emily Wilson. Here's your daily overview.</p>
+      <p className="hd-subtitle">Welcome back, Doctor. Here's your daily overview.</p>
 
       {loading && <div className="hd-info">Loading dashboard data...</div>}
       {error && <div className="hd-error">{error}</div>}
