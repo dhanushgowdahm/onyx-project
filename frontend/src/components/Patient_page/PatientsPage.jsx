@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal"; 
+import PatientModal from "../doctor_page/PatientModal";
 import "./PatientsPage.css";
+import "../doctor_page/dashboard.css";
 import { patientsAPI, doctorsAPI, bedsAPI } from "../../services/api";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ErrorMessage from "../common/ErrorMessage";
 
@@ -16,6 +18,7 @@ function PatientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
+  const [viewingPatient, setViewingPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const patientsPerPage = 5;
@@ -220,6 +223,11 @@ function PatientsPage() {
     setEditingPatient(patient);
   };
 
+  const handleViewPatient = (patient) => {
+    console.log('Opening patient view for:', patient.name);
+    setViewingPatient(patient);
+  };
+
   const handleUpdatePatient = async (updatedPatient) => {
     try {
       const patientData = {
@@ -339,6 +347,14 @@ function PatientsPage() {
                     <td>{getDoctorName(p.assigned_doctor)}</td>
                     <td>
                       <button
+                        className="icon-btn view-patient-btn"
+                        onClick={() => handleViewPatient(p)}
+                        disabled={loading}
+                        title="View Patient Details"
+                      >
+                        <FaEye />
+                      </button>
+                      <button
                         className="icon-btn"
                         onClick={() => handleEditClick(p)}
                         disabled={loading}
@@ -401,6 +417,15 @@ function PatientsPage() {
           patient={editingPatient}
           onClose={() => setEditingPatient(null)}
           onSave={handleUpdatePatient}
+        />
+      )}
+
+      {viewingPatient && (
+        <PatientModal
+          patient={viewingPatient}
+          onClose={() => setViewingPatient(null)}
+          onAddMedication={() => console.log('Add medication functionality not available in patients page')}
+          onAddDiagnosis={() => console.log('Add diagnosis functionality not available in patients page')}
         />
       )}
     </div>

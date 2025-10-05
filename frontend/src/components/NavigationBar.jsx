@@ -1,9 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { authAPI } from "../services/api";
 import "./NavigationBar.css";
 
 function NavigationBar({ role = "receptionist" }) {
   const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const info = await authAPI.getUserInfo();
+        console.log('User info received:', info); // Debug log
+        setUserInfo(info);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        // If there's an auth error, the handleResponse function will redirect to login
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   const handleLogout = () => {
     // Clear authentication tokens
@@ -51,11 +71,36 @@ function NavigationBar({ role = "receptionist" }) {
     </>
   );
 
-  const getUserInfo = () => {
-    if (role === "doctor") {
-      return "Welcome, Doctor";
+  const getWelcomeMessage = () => {
+    if (loading) {
+      return "Loading...";
     }
-    return "Welcome, Alice Johnson";
+    
+    if (userInfo) {
+      console.log('Building welcome message with:', {
+        first_name: userInfo.first_name,
+        last_name: userInfo.last_name,
+        username: userInfo.username
+      }); // Debug log
+      
+      // Priority order: full name -> first name only -> username
+      let displayName = userInfo.username;
+      
+      if (userInfo.first_name && userInfo.last_name) {
+        displayName = `${userInfo.first_name} ${userInfo.last_name}`;
+      } else if (userInfo.first_name) {
+        displayName = userInfo.first_name;
+      } else if (userInfo.last_name) {
+        displayName = userInfo.last_name;
+      }
+      
+      if (role === "doctor") {
+        return `Welcome, Dr. ${displayName}`;
+      }
+      return `Welcome, ${displayName}`;
+    }
+    
+    return role === "doctor" ? "Welcome, Doctor" : "Welcome, User";
   };
 
   return (
@@ -65,7 +110,7 @@ function NavigationBar({ role = "receptionist" }) {
         {role === "doctor" ? renderDoctorNavigation() : renderReceptionistNavigation()}
       </nav>
       <div className="user-info">
-        <span>{getUserInfo()}</span>
+        <span>{getWelcomeMessage()}</span>
         <button className="logout-btn" onClick={handleLogout}>Logout</button>
       </div>
     </header>
