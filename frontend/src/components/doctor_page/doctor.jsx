@@ -6,7 +6,7 @@ import MedicationModal from "./MedicationModal";
 import DiagnosisModal from "./DiagnosisModal";
 import "./dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { patientsAPI, appointmentsAPI } from "../../services/api";
+import { patientsAPI, appointmentsAPI, medicinesAPI, diagnosesAPI } from "../../services/api";
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
@@ -53,14 +53,16 @@ export default function Dashboard() {
     navigate("/login");
   };
 
-  const handlePrescribe = (patientId, medicationDetails) => {
-    console.log(`Prescribed for patient ${patientId}:`, medicationDetails);
-    alert(`Medication prescribed successfully for ${prescribePatient.name}`);
+  const handlePrescribe = async (patientId, medicineData) => {
+    console.log(`Medicine prescribed for patient ${patientId}:`, medicineData);
+    // Optionally refresh patient data or show updated medicines list
+    // Could fetch updated patient data here if needed
   };
 
-  const handleSaveDiagnosis = (patientId, diagnosisData) => {
+  const handleSaveDiagnosis = async (patientId, diagnosisData) => {
     console.log(`Diagnosis saved for patient ${patientId}:`, diagnosisData);
-    alert(`Diagnosis saved successfully for ${diagnosisPatient.name}`);
+    // Optionally refresh patient data or show updated diagnoses list
+    // Could fetch updated patient data here if needed
   };
 
   const handleAddMedication = (patientId) => {
@@ -120,8 +122,11 @@ export default function Dashboard() {
                     <button className="hd-btn-icon" onClick={() => setSelectedPatient(p)} title="View Patient Details">
                       👁️
                     </button>
-                    <button className="hd-btn-icon" onClick={() => setPrescribePatient(p)} title="Prescribe Medication">
+                    <button className="hd-btn-icon" onClick={() => setPrescribePatient(p)} title="Prescribe Medicine">
                       💊
+                    </button>
+                    <button className="hd-btn-icon" onClick={() => setDiagnosisPatient(p)} title="Add Diagnosis">
+                      🩺
                     </button>
                   </td>
                 </tr>

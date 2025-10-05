@@ -5,11 +5,10 @@ from django.contrib.auth import logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .serializers import MyTokenObtainPairSerializer
+from rest_framework import viewsets, permissions, serializers
+from .serializers import MyTokenObtainPairSerializer, DoctorSerializer, PatientSerializer, BedSerializer, AppointmentSerializer, MedicineSerializer, DiagnosisSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework import viewsets, permissions
-from .models import Doctor, Patient, Bed, Appointment
-from .serializers import DoctorSerializer, PatientSerializer, BedSerializer, AppointmentSerializer
+from .models import Doctor, Patient, Bed, Appointment, Medicine, Diagnosis
 from .permissions import IsAdminOrReceptionist, IsDoctor # Import new permissions
 
 # Custom Login View - Standard JWT approach, only returns tokens
@@ -92,6 +91,28 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         elif user.role in ['admin', 'receptionist']:
             return Appointment.objects.all()
         return Appointment.objects.none()
+
+class MedicineViewSet(viewsets.ModelViewSet):
+    serializer_class = MedicineSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in ['admin', 'receptionist', 'doctor']:
+            # All authenticated users can see all medicines
+            return Medicine.objects.all()
+        return Medicine.objects.none()
+
+class DiagnosisViewSet(viewsets.ModelViewSet):
+    serializer_class = DiagnosisSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in ['admin', 'receptionist', 'doctor']:
+            # All authenticated users can see all diagnoses
+            return Diagnosis.objects.all()
+        return Diagnosis.objects.none()
 
 
 # Login Page View

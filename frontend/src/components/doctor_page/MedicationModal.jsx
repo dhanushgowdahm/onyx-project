@@ -1,40 +1,103 @@
 // src/components/MedicationModal.jsx
 import React, { useState } from "react";
+import { medicinesAPI } from "../../services/api";
 
 export default function MedicationModal({ patient, onClose, onPrescribe }) {
-  const [medicationName, setMedicationName] = useState("");
+  const [medicineName, setMedicineName] = useState("");
   const [dosage, setDosage] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [duration, setDuration] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [medicationType, setMedicationType] = useState("tablet");
+  const [frequency, setFrequency] = useState([]);
+  const [relationToFood, setRelationToFood] = useState("");
+  const [noOfDays, setNoOfDays] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePrescribe = () => {
-    if (medicationName.trim() && dosage.trim() && frequency.trim()) {
-      const prescriptionData = {
-        medicationName,
-        dosage,
-        frequency,
-        duration,
-        instructions,
-        medicationType,
-        prescribedDate: new Date().toLocaleDateString(),
-        patientId: patient.id,
-        patientName: patient.name
-      };
-      
-      if (onPrescribe) {
-        onPrescribe(patient.id, prescriptionData);
+  const handleFrequencyChange = (selectedFreq) => {
+    setFrequency(prev => {
+      if (prev.includes(selectedFreq)) {
+        // Remove if already selected
+        return prev.filter(f => f !== selectedFreq);
+      } else {
+        // Add if not selected
+        return [...prev, selectedFreq];
       }
-      console.log(`Prescribed for ${patient.name}:`, prescriptionData);
-      onClose();
+    });
+  };
+
+  const handlePrescribe = async () => {
+    if (medicineName.trim() && dosage.trim() && frequency.length > 0 && relationToFood && noOfDays) {
+      setIsSubmitting(true);
+      try {
+        const medicineData = {
+          patient: patient.id,
+          medicine_name: medicineName.trim(),
+          dosage: dosage.trim(),
+          frequency: frequency.join(','), // Convert array to comma-separated string
+          relation_to_food: relationToFood,
+          no_of_days: parseInt(noOfDays)
+          // Note: doctor field is automatically assigned by backend from authenticated user
+        };
+        
+        console.log('Sending medicine data:', medicineData);
+        console.log('Auth token:', localStorage.getItem('access_token') ? 'Present' : 'Missing');
+        
+        const result = await medicinesAPI.create(medicineData);
+        console.log('Medicine creation result:', result);
+        
+        if (onPrescribe) {
+          onPrescribe(patient.id, medicineData);
+        }
+        
+        console.log(`Medicine prescribed for ${patient.name}:`, medicineData);
+        alert(`Medicine prescribed successfully for ${patient.name}`);
+        onClose();
+      } catch (error) {
+        console.error('Error prescribing medicine:', error);
+        alert(`Failed to prescribe medicine: ${error.message}`);
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      alert('Please fill in all required fields');
     }
   };
+
+  // Add CSS styles for checkbox group (you can move this to a separate CSS file)
+  const checkboxGroupStyles = `
+    .hd-checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    .hd-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .hd-checkbox-label:hover {
+      background-color: #e9e9e9;
+    }
+    .hd-checkbox {
+      margin: 0;
+      cursor: pointer;
+    }
+    .hd-checkbox-text {
+      font-size: 14px;
+      color: #333;
+    }
+  `;
 
   if (!patient) return null;
 
   return (
     <div className="hd-modal-overlay" role="dialog" aria-modal="true">
+      <style>{checkboxGroupStyles}</style>
       <div className="hd-medication-modal-enhanced">
         <button className="hd-modal-close" onClick={onClose} aria-label="Close">×</button>
         
@@ -56,38 +119,37 @@ export default function MedicationModal({ patient, onClose, onPrescribe }) {
         <div className="hd-prescription-form">
           <div className="hd-form-grid">
             <div className="hd-form-group">
-              <label className="hd-form-label" htmlFor="medication-name">
+              <label className="hd-form-label" htmlFor="medicine-name">
                 <span className="hd-label-icon">🏷️</span>
-                Medication Name *
+                Medicine Name *
               </label>
               <input
-                id="medication-name"
+                id="medicine-name"
                 type="text"
                 className="hd-form-input"
                 placeholder="e.g., Amoxicillin"
-                value={medicationName}
-                onChange={(e) => setMedicationName(e.target.value)}
+                value={medicineName}
+                onChange={(e) => setMedicineName(e.target.value)}
                 required
               />
             </div>
 
             <div className="hd-form-group">
-              <label className="hd-form-label" htmlFor="medication-type">
-                <span className="hd-label-icon">💊</span>
-                Type
+              <label className="hd-form-label" htmlFor="relation-to-food">
+                <span className="hd-label-icon">🍽️</span>
+                Relation to Food *
               </label>
               <select
-                id="medication-type"
+                id="relation-to-food"
                 className="hd-form-select"
-                value={medicationType}
-                onChange={(e) => setMedicationType(e.target.value)}
+                value={relationToFood}
+                onChange={(e) => setRelationToFood(e.target.value)}
+                required
               >
-                <option value="tablet">Tablet</option>
-                <option value="capsule">Capsule</option>
-                <option value="syrup">Syrup</option>
-                <option value="injection">Injection</option>
-                <option value="cream">Cream/Ointment</option>
-                <option value="drops">Drops</option>
+                <option value="">Select relation to food</option>
+                <option value="Before">Before meals</option>
+                <option value="After">After meals</option>
+                <option value="With">With meals</option>
               </select>
             </div>
 
@@ -108,65 +170,52 @@ export default function MedicationModal({ patient, onClose, onPrescribe }) {
             </div>
 
             <div className="hd-form-group">
-              <label className="hd-form-label" htmlFor="frequency">
+              <label className="hd-form-label">
                 <span className="hd-label-icon">⏰</span>
-                Frequency *
+                Frequency * (Select one or more)
               </label>
-              <select
-                id="frequency"
-                className="hd-form-select"
-                value={frequency}
-                onChange={(e) => setFrequency(e.target.value)}
-                required
-              >
-                <option value="">Select frequency</option>
-                <option value="once-daily">Once daily</option>
-                <option value="twice-daily">Twice daily</option>
-                <option value="three-times-daily">Three times daily</option>
-                <option value="four-times-daily">Four times daily</option>
-                <option value="as-needed">As needed</option>
-                <option value="weekly">Weekly</option>
-              </select>
+              <div className="hd-checkbox-group">
+                {['Breakfast', 'Lunch', 'Dinner'].map((freq) => (
+                  <label key={freq} className="hd-checkbox-label">
+                    <input
+                      type="checkbox"
+                      className="hd-checkbox"
+                      checked={frequency.includes(freq)}
+                      onChange={() => handleFrequencyChange(freq)}
+                    />
+                    <span className="hd-checkbox-text">{freq}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="hd-form-group">
-              <label className="hd-form-label" htmlFor="duration">
+              <label className="hd-form-label" htmlFor="no-of-days">
                 <span className="hd-label-icon">📅</span>
-                Duration
+                Number of Days *
               </label>
               <input
-                id="duration"
-                type="text"
+                id="no-of-days"
+                type="number"
                 className="hd-form-input"
-                placeholder="e.g., 7 days"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
+                placeholder="e.g., 7"
+                min="1"
+                value={noOfDays}
+                onChange={(e) => setNoOfDays(e.target.value)}
+                required
               />
             </div>
           </div>
 
-          <div className="hd-form-group hd-full-width">
-            <label className="hd-form-label" htmlFor="instructions">
-              <span className="hd-label-icon">📝</span>
-              Additional Instructions
-            </label>
-            <textarea
-              id="instructions"
-              className="hd-form-textarea"
-              placeholder="Enter any special instructions, warnings, or notes for the patient..."
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              rows={3}
-            />
-          </div>
         </div>
 
         <div className="hd-prescription-summary">
-          <h4 className="hd-summary-title">Prescription Summary</h4>
+          <h4 className="hd-summary-title">Medicine Prescription Summary</h4>
           <div className="hd-summary-content">
             <span className="hd-summary-text">
-              {medicationName || "Medication"} {dosage && `(${dosage})`} - {frequency || "Frequency not set"}
-              {duration && ` for ${duration}`}
+              {medicineName || "Medicine"} {dosage && `(${dosage})`} - {frequency.length > 0 ? frequency.join(', ') : "Frequency not set"}
+              {relationToFood && ` ${relationToFood} meals`}
+              {noOfDays && ` for ${noOfDays} days`}
             </span>
           </div>
         </div>
@@ -181,9 +230,9 @@ export default function MedicationModal({ patient, onClose, onPrescribe }) {
           <button 
             className="hd-btn hd-btn-primary" 
             onClick={handlePrescribe}
-            disabled={!medicationName.trim() || !dosage.trim() || !frequency}
+            disabled={isSubmitting || !medicineName.trim() || !dosage.trim() || frequency.length === 0 || !relationToFood || !noOfDays}
           >
-            <span>✅</span> Prescribe Medication
+            <span>✅</span> {isSubmitting ? 'Prescribing...' : 'Prescribe Medicine'}
           </button>
         </div>
       </div>

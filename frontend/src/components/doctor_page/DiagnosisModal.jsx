@@ -1,24 +1,40 @@
 // src/components/doctor_page/DiagnosisModal.jsx
 import React, { useState } from "react";
+import { diagnosesAPI } from "../../services/api";
 import "./dashboard.css";
 
 export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
   const [diagnosis, setDiagnosis] = useState("");
-  const [severity, setSeverity] = useState("mild");
-  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (diagnosis.trim()) {
-      const diagnosisData = {
-        diagnosis: diagnosis.trim(),
-        severity,
-        notes: notes.trim(),
-        date: new Date().toISOString().split('T')[0],
-        doctor: "Doctor"
-      };
-      onSaveDiagnosis(patient.id, diagnosisData);
-      onClose();
+      setIsSubmitting(true);
+      try {
+        const diagnosisData = {
+          patient: patient.id,
+          diagnosis: diagnosis.trim()
+          // Note: doctor field is automatically assigned by backend from authenticated user
+        };
+        
+        await diagnosesAPI.create(diagnosisData);
+        
+        if (onSaveDiagnosis) {
+          onSaveDiagnosis(patient.id, diagnosisData);
+        }
+        
+        console.log(`Diagnosis saved for ${patient.name}:`, diagnosisData);
+        alert(`Diagnosis saved successfully for ${patient.name}`);
+        onClose();
+      } catch (error) {
+        console.error('Error saving diagnosis:', error);
+        alert(`Failed to save diagnosis: ${error.message}`);
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      alert('Please enter a diagnosis');
     }
   };
 
@@ -38,51 +54,18 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
         </div>
 
         <form onSubmit={handleSubmit} className="hd-diagnosis-form">
-          <div className="hd-form-row">
-            <div className="hd-form-group">
-              <label className="hd-form-label">
-                <span className="hd-label-icon">🔍</span>
-                Diagnosis/Condition *
-              </label>
-              <input
-                type="text"
-                value={diagnosis}
-                onChange={(e) => setDiagnosis(e.target.value)}
-                className="hd-diagnosis-input"
-                placeholder="Enter primary diagnosis..."
-                required
-              />
-            </div>
-
-            <div className="hd-form-group">
-              <label className="hd-form-label">
-                <span className="hd-label-icon">⚠️</span>
-                Severity Level
-              </label>
-              <select
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value)}
-                className="hd-diagnosis-select"
-              >
-                <option value="mild">🟢 Mild</option>
-                <option value="moderate">🟡 Moderate</option>
-                <option value="severe">🟠 Severe</option>
-                <option value="critical">🔴 Critical</option>
-              </select>
-            </div>
-          </div>
-
           <div className="hd-form-group">
             <label className="hd-form-label">
-              <span className="hd-label-icon">📝</span>
-              Clinical Notes & Observations
+              <span className="hd-label-icon">🔍</span>
+              Diagnosis Details *
             </label>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={diagnosis}
+              onChange={(e) => setDiagnosis(e.target.value)}
               className="hd-diagnosis-textarea"
-              placeholder="Enter detailed clinical observations, symptoms, test results, and treatment recommendations..."
-              rows={4}
+              placeholder="Enter detailed diagnosis, clinical observations, symptoms, test results, and treatment recommendations..."
+              rows={6}
+              required
             />
           </div>
 
@@ -101,9 +84,9 @@ export default function DiagnosisModal({ patient, onClose, onSaveDiagnosis }) {
             <button type="button" className="hd-btn hd-btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="hd-btn hd-btn-primary" disabled={!diagnosis.trim()}>
+            <button type="submit" className="hd-btn hd-btn-primary" disabled={isSubmitting || !diagnosis.trim()}>
               <span className="hd-btn-icon">💾</span>
-              Save Diagnosis
+              {isSubmitting ? 'Saving...' : 'Save Diagnosis'}
             </button>
           </div>
         </form>

@@ -69,3 +69,61 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"Appointment for {self.patient.name} with Dr. {self.doctor.name}"
+
+class Medicine(models.Model):
+    FREQUENCY_CHOICES = (
+        ('Breakfast', 'Breakfast'),
+        ('Lunch', 'Lunch'),
+        ('Dinner', 'Dinner'),
+    )
+    
+    RELATION_TO_FOOD_CHOICES = (
+        ('Before', 'Before'),
+        ('After', 'After'),
+        ('With', 'With'),
+    )
+    
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medicines')
+    medicine_name = models.CharField(max_length=100)
+    dosage = models.CharField(max_length=50, help_text="e.g., '500mg', '1 tablet'")
+    frequency = models.CharField(max_length=100, help_text="Comma-separated values: e.g., 'Breakfast,Dinner'")
+    relation_to_food = models.CharField(max_length=20, choices=RELATION_TO_FOOD_CHOICES)
+    no_of_days = models.PositiveIntegerField()
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_frequency_list(self):
+        """Return frequency as a list"""
+        if self.frequency:
+            return [f.strip() for f in self.frequency.split(',')]
+        return []
+    
+    def set_frequency_list(self, frequency_list):
+        """Set frequency from a list"""
+        if frequency_list:
+            self.frequency = ','.join(frequency_list)
+        else:
+            self.frequency = ''
+
+    def __str__(self):
+        return f"{self.medicine_name} for {self.patient.name}"
+
+    class Meta:
+        verbose_name = "Medicine"
+        verbose_name_plural = "Medicines"
+
+class Diagnosis(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='diagnoses')
+    diagnosis = models.TextField(help_text="The actual diagnosis details")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Diagnosis for {self.patient.name}"
+
+    class Meta:
+        verbose_name = "Diagnosis"
+        verbose_name_plural = "Diagnoses"
+        ordering = ['-created_at']
