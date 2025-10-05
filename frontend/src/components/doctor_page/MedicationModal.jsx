@@ -11,14 +11,16 @@ export default function MedicationModal({ patient, onClose, onPrescribe }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFrequencyChange = (selectedFreq) => {
+    console.log(`Frequency change requested for: ${selectedFreq}`);
+    console.log(`Current frequency array:`, frequency);
+    
     setFrequency(prev => {
-      if (prev.includes(selectedFreq)) {
-        // Remove if already selected
-        return prev.filter(f => f !== selectedFreq);
-      } else {
-        // Add if not selected
-        return [...prev, selectedFreq];
-      }
+      const newFrequency = prev.includes(selectedFreq)
+        ? prev.filter(f => f !== selectedFreq)  // Remove if already selected
+        : [...prev, selectedFreq];              // Add if not selected
+      
+      console.log(`New frequency array:`, newFrequency);
+      return newFrequency;
     });
   };
 
@@ -165,14 +167,12 @@ export default function MedicationModal({ patient, onClose, onPrescribe }) {
                   <label 
                     key={freq} 
                     className={`hd-checkbox-label ${frequency.includes(freq) ? 'checked' : ''}`}
-                    onClick={() => handleFrequencyChange(freq)}
                   >
                     <input
                       type="checkbox"
                       className="hd-checkbox"
                       checked={frequency.includes(freq)}
-                      onChange={() => {}} // Handled by label click
-                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => handleFrequencyChange(freq)}
                     />
                     <span className="hd-checkbox-text">{freq}</span>
                   </label>

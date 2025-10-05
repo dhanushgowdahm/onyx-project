@@ -82,10 +82,13 @@ export const authAPI = {
 // Patients API
 export const patientsAPI = {
   getAll: async () => {
+    console.log('Fetching all patients...');
     const response = await fetch(`${API_BASE_URL}/patients/`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse(response);
+    console.log('Patients API response:', result);
+    return result;
   },
 
   create: async (patientData) => {
@@ -320,10 +323,14 @@ export const medicinesAPI = {
   },
 
   getByPatient: async (patientId) => {
+    console.log(`Fetching medicines for patient ID: ${patientId}`);
+    console.log(`API URL: ${API_BASE_URL}/medicines/?patient=${patientId}`);
     const response = await fetch(`${API_BASE_URL}/medicines/?patient=${patientId}`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse(response);
+    console.log(`Medicines API response for patient ${patientId}:`, result);
+    return result;
   }
 };
 
@@ -374,10 +381,14 @@ export const diagnosesAPI = {
   },
 
   getByPatient: async (patientId) => {
+    console.log(`Fetching diagnoses for patient ID: ${patientId}`);
+    console.log(`API URL: ${API_BASE_URL}/diagnoses/?patient=${patientId}`);
     const response = await fetch(`${API_BASE_URL}/diagnoses/?patient=${patientId}`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse(response);
+    console.log(`Diagnoses API response for patient ${patientId}:`, result);
+    return result;
   }
 };
 

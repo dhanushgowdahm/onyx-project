@@ -16,17 +16,23 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
         setLoading(true);
         setError(null);
         
+        console.log("Patient data received in modal:", patient);
+        console.log("Fetching medicines and diagnoses for patient ID:", patient.id);
+        
         // Fetch medicines and diagnoses for this patient
         const [medicinesData, diagnosesData] = await Promise.all([
           medicinesAPI.getByPatient(patient.id),
           diagnosesAPI.getByPatient(patient.id)
         ]);
         
+        console.log("Medicines data received:", medicinesData);
+        console.log("Diagnoses data received:", diagnosesData);
+        
         setMedicines(medicinesData || []);
         setDiagnoses(diagnosesData || []);
       } catch (err) {
         console.error("Error fetching patient data:", err);
-        setError("Failed to load patient medicines and diagnoses");
+        setError(`Failed to load patient data: ${err.message}`);
       } finally {
         setLoading(false);
       }
@@ -81,7 +87,7 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
                   </div>
                   <div className="hd-info-item">
                     <span className="hd-info-label">Emergency Contact:</span>
-                    <span className="hd-info-value">{patient.emergency || "-"}</span>
+                    <span className="hd-info-value">{patient.emergency_contact || "-"}</span>
                   </div>
                   <div className="hd-info-item">
                     <span className="hd-info-label">Age:</span>
@@ -89,7 +95,11 @@ export default function PatientModal({ patient, onClose, onAddMedication, onAddD
                   </div>
                   <div className="hd-info-item">
                     <span className="hd-info-label">Assigned Bed:</span>
-                    <span className="hd-info-value">{patient.bed || "-"}</span>
+                    <span className="hd-info-value">
+                      {patient.assigned_bed_number 
+                        ? `${patient.assigned_bed_ward} - Bed ${patient.assigned_bed_number}` 
+                        : "-"}
+                    </span>
                   </div>
                   <div className="hd-info-item">
                     <span className="hd-info-label">Gender:</span>

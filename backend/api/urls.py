@@ -8,7 +8,9 @@ from .views import (
     BedViewSet, 
     AppointmentViewSet,
     MedicineViewSet,
-    DiagnosisViewSet
+    DiagnosisViewSet,
+    UserInfoView,
+    DebugDataView
 )
 
 # Create a router and register our viewsets with it.
@@ -24,6 +26,8 @@ router.register(r'diagnoses', DiagnosisViewSet, basename='diagnosis')
 urlpatterns = [
     # Your existing auth URLs
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('user-info/', UserInfoView.as_view(), name='user_info'),
+    path('debug-data/', DebugDataView.as_view(), name='debug_data'),
     
     # Add the router-generated URLs
     path('', include(router.urls)),

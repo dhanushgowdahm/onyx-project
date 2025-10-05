@@ -83,10 +83,17 @@ class MedicineViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Medicine.objects.none()
+        
         if user.role in ['admin', 'receptionist', 'doctor']:
-            # All authenticated users can see all medicines
-            return Medicine.objects.all()
-        return Medicine.objects.none()
+            queryset = Medicine.objects.all()
+            
+            # Filter by patient if provided in query params
+            patient_id = self.request.query_params.get('patient', None)
+            if patient_id is not None:
+                queryset = queryset.filter(patient_id=patient_id)
+                
+        return queryset.order_by('-created_at')
 
 class DiagnosisViewSet(viewsets.ModelViewSet):
     serializer_class = DiagnosisSerializer
@@ -94,10 +101,17 @@ class DiagnosisViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Diagnosis.objects.none()
+        
         if user.role in ['admin', 'receptionist', 'doctor']:
-            # All authenticated users can see all diagnoses
-            return Diagnosis.objects.all()
-        return Diagnosis.objects.none()
+            queryset = Diagnosis.objects.all()
+            
+            # Filter by patient if provided in query params
+            patient_id = self.request.query_params.get('patient', None)
+            if patient_id is not None:
+                queryset = queryset.filter(patient_id=patient_id)
+                
+        return queryset.order_by('-created_at')
 
 
 # Login Page View
@@ -124,6 +138,36 @@ class UserInfoView(APIView):
             'role': user.role,
             'user_id': user.id,
             'is_authenticated': True
+        })
+
+# Debug view to check data
+class DebugDataView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from .models import Patient, Medicine, Diagnosis, Bed
+        
+        patients_count = Patient.objects.count()
+        medicines_count = Medicine.objects.count()
+        diagnoses_count = Diagnosis.objects.count()
+        beds_count = Bed.objects.count()
+        
+        # Get sample patient data
+        sample_patient = Patient.objects.first()
+        sample_patient_data = None
+        if sample_patient:
+            from .serializers import PatientSerializer
+            sample_patient_data = PatientSerializer(sample_patient).data
+        
+        return Response({
+            'counts': {
+                'patients': patients_count,
+                'medicines': medicines_count,
+                'diagnoses': diagnoses_count,
+                'beds': beds_count
+            },
+            'sample_patient': sample_patient_data,
+            'user_role': request.user.role
         })
 
 # Redirection logic based on role (kept for backward compatibility)

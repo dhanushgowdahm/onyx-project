@@ -30,6 +30,7 @@ export default function Dashboard() {
           patientsAPI.getAll(), // This now gets doctor-specific patients from the backend
           appointmentsAPI.getAll(), // This now gets doctor-specific appointments
         ]);
+        console.log("Patients data received:", patientsData);
         setPatients(patientsData || []);
         
         // Filter for today's appointments
@@ -128,7 +129,11 @@ export default function Dashboard() {
               {patients.map((p) => (
                 <tr key={p.id}>
                   <td>{p.name}</td>
-                  <td>{p.assigned_bed ? `Bed ${p.assigned_bed}` : "N/A"}</td>
+                  <td>
+                    {p.assigned_bed_number 
+                      ? `${p.assigned_bed_ward} - Bed ${p.assigned_bed_number}` 
+                      : "N/A"}
+                  </td>
                   <td>{p.condition}</td>
                   <td>
                     <button className="hd-btn-icon" onClick={() => setSelectedPatient(p)} title="View Patient Details">

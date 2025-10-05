@@ -31,6 +31,10 @@ class BedSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PatientSerializer(serializers.ModelSerializer):
+    assigned_bed_number = serializers.CharField(source='assigned_bed.bed_number', read_only=True, default=None)
+    assigned_bed_ward = serializers.CharField(source='assigned_bed.ward', read_only=True, default=None)
+    assigned_doctor_name = serializers.CharField(source='assigned_doctor.user.get_full_name', read_only=True, default=None)
+    
     class Meta:
         model = Patient
         fields = '__all__'
