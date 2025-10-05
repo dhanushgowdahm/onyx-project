@@ -47,21 +47,13 @@ class DoctorViewSet(viewsets.ModelViewSet):
 
 class PatientViewSet(viewsets.ModelViewSet):
     serializer_class = PatientSerializer
-    permission_classes = [IsAuthenticated] # Allow any authenticated user
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        This view should return a list of all the patients
-        for the currently authenticated user.
-        """
         user = self.request.user
         if user.role == 'doctor':
-            # If the user is a doctor, find their Doctor profile
-            try:
-                doctor_profile = Doctor.objects.get(name__icontains=user.username) # This is a simple link, a direct foreign key on CustomUser would be better
-                return Patient.objects.filter(assigned_doctor=doctor_profile)
-            except Doctor.DoesNotExist:
-                return Patient.objects.none() # No patients if no doctor profile
+            # Use the direct relationship! This is robust.
+            return Patient.objects.filter(assigned_doctor=user.doctor_profile)
         elif user.role in ['admin', 'receptionist']:
             return Patient.objects.all()
         return Patient.objects.none()
@@ -78,17 +70,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Optionally restricts the returned appointments to a given user,
-        by filtering against a `username` query parameter in the URL.
-        """
         user = self.request.user
         if user.role == 'doctor':
-            try:
-                doctor_profile = Doctor.objects.get(name__icontains=user.username)
-                return Appointment.objects.filter(doctor=doctor_profile)
-            except Doctor.DoesNotExist:
-                return Appointment.objects.none()
+            # Use the direct relationship here as well!
+            return Appointment.objects.filter(doctor=user.doctor_profile)
         elif user.role in ['admin', 'receptionist']:
             return Appointment.objects.all()
         return Appointment.objects.none()
