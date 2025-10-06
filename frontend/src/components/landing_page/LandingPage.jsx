@@ -19,7 +19,7 @@ const LandingPage = () => {
 
   const handleRegisterClick = () => {
     // Navigate to Django admin page
-    window.open('http://localhost:8000/admin/', '_blank');
+    window.open('https://api.themahadeva.live/admin/', '_blank');
   };
 
   return (
