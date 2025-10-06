@@ -223,6 +223,7 @@ function ReceptionistDashboard() {
                       <span className="appointment-doctor">Dr. {appointment.doctor_name}</span>
                       <span className="appointment-date">{new Date(appointment.appointment_date).toLocaleDateString()}</span>
                       <span className={`appointment-status status-${appointment.status.toLowerCase()}`}>
+                        
                         {appointment.status}
                       </span>
                     </div>
