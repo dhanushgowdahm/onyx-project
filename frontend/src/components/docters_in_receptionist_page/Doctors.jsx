@@ -300,7 +300,7 @@ const Doctors = () => {
                       return (
                         <tr key={doctor?.id || Math.random()}>
                           <td>{doctor?.id || 'N/A'}</td>
-                          <td>{doctor?.name || 'N/A'}</td>
+                          <td>{doctor?.full_name || 'N/A'}</td>
                           <td>{doctor?.specialization || 'N/A'}</td>
                           <td>{doctor?.contact || 'N/A'}</td>
                           <td>
